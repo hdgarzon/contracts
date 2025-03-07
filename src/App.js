@@ -72,68 +72,6 @@ const CleaningApp = () => {
     setShowLoginModal(false);
   };
 
- // Handle apply filters
- const handleApplyFilters = () => {
-  setIsLoading(true);
-  
-  // Collect filter values from inputs and checkboxes
-  const locationInput = document.querySelector('input[type="text"][value="' + filterOptions.location + '"]');
-  const location = locationInput ? locationInput.value : filterOptions.location;
-  
-  const typeCheckboxes = Array.from(document.querySelectorAll('input[type="checkbox"][id^="Multifamily"], input[type="checkbox"][id^="Studio"]'));
-  const selectedTypes = typeCheckboxes
-    .filter(cb => cb.checked)
-    .map(cb => cb.id);
-    
-  const bidCheckboxes = Array.from(document.querySelectorAll('input[type="checkbox"][id^="With"], input[type="checkbox"][id^="Without"]'));
-  const selectedBids = bidCheckboxes
-    .filter(cb => cb.checked)
-    .map(cb => cb.id);
-  
-  // Update active filters
-  const updatedFilters = {
-    ...activeFilters,
-    location,
-    types: selectedTypes,
-    bids: selectedBids
-  };
-  
-  setActiveFilters(updatedFilters);
-  
-  // Filter contracts based on selected filters
-  // This is a simplified filtering logic - in a real app with Wix, 
-  // you would likely fetch filtered data from the backend
-  const filtered = contracts.filter(contract => {
-    // Filter by location
-    if (location && !contract.location.toLowerCase().includes(location.toLowerCase())) {
-      return false;
-    }
-    
-    // Filter by type
-    if (selectedTypes.length > 0 && !selectedTypes.includes(contract.type)) {
-      return false;
-    }
-    
-    // Filter by bids (just a demonstration)
-    if (selectedBids.length > 0) {
-      if (selectedBids.includes('With bids') && contract.bidders === 0) {
-        return false;
-      }
-      if (selectedBids.includes('Without Bids') && contract.bidders > 0) {
-        return false;
-      }
-    }
-    
-    return true;
-  });
-  
-  // Apply the filtered contracts after a short delay to show loading state
-  setTimeout(() => {
-    setFilteredContracts(filtered);
-    setIsLoading(false);
-  }, 500);
-};
-
   return (
     <div className="min-h-screen bg-white">
       {/* Loading State */}
@@ -236,7 +174,9 @@ const CleaningApp = () => {
               {/* Apply Filters Button */}
               <div className="mt-8">
                 <button 
-                  onClick={() => handleApplyFilters()}
+                  onClick={() => {
+                    console.log("Filtros aplicados:");
+                  }}
                   className="w-full bg-blue-500 text-white py-2 hover:bg-blue-600"
                 >
                   Apply

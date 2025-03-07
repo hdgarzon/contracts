@@ -20,6 +20,9 @@
   .text-gray-600 {
     color: #4F4F4F;
   }
+  .text-gray-700 {
+    color: #333333;
+  }
   .bg-gray-100{
     background-color: #BDBDBD;
   }
