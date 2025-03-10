@@ -1,82 +1,74 @@
-/**
- * Funciones utilitarias para formatear datos
- */
+// Formateadores para datos
 
-/**
- * Formatea una fecha en el formato "Día, MM/DD/AAAA"
- * @param {string|Date} date - Fecha a formatear
- * @returns {string} Fecha formateada
- */
-export const formatDate = (date) => {
-    if (!date) return '';
-    
-    const dateObj = date instanceof Date ? date : new Date(date);
-    if (isNaN(dateObj.getTime())) return '';
-    
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thur', 'Fri', 'Sat'];
-    const day = days[dateObj.getDay()];
-    const month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
-    const dayOfMonth = dateObj.getDate().toString().padStart(2, '0');
-    const year = dateObj.getFullYear();
-    
-    return `${day}, ${month}/${dayOfMonth}/${year}`;
-  };
+// Formateador de fechas
+export const formatDate = (dateValue) => {
+  if (!dateValue) return '';
   
-  /**
-   * Formatea un rango de fechas para el filtro
-   * @param {Date} startDate - Fecha de inicio
-   * @param {Date} endDate - Fecha de fin
-   * @returns {string} Rango de fechas formateado
-   */
-  export const formatDateRange = (startDate, endDate) => {
-    const formatShortDate = (date) => {
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      const day = date.getDate().toString().padStart(2, '0');
-      const year = date.getFullYear();
-      return `${month}/${day}/${year}`;
-    };
+  try {
+    const date = new Date(dateValue);
     
-    return `${formatShortDate(startDate)} - ${formatShortDate(endDate)}`;
-  };
+    // Verificar si la fecha es válida
+    if (isNaN(date.getTime())) {
+      return '';
+    }
+    
+    // Obtener el nombre del día de la semana
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thur', 'Fri', 'Sat'];
+    const dayName = dayNames[date.getDay()];
+    
+    // Formatear como MM/DD/YYYY
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const year = date.getFullYear();
+    
+    return `${dayName}, ${month}/${day}/${year}`;
+  } catch (error) {
+    return '';
+  }
+};
+
+// Formateador de moneda
+export const formatCurrency = (value) => {
+  if (value === undefined || value === null) return '0';
   
-  /**
-   * Formatea un valor monetario con separadores de miles
-   * @param {number|string} value - Valor a formatear
-   * @returns {string} Valor formateado
-   */
-  export const formatCurrency = (value) => {
-    if (!value) return '0';
+  try {
+    // Convertir a número si es un string
+    const numValue = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.-]+/g, '')) : value;
     
-    // Si es string, intentar convertir a número
-    let numValue = typeof value === 'string' ? parseFloat(value.replace(/,/g, '')) : value;
-    
-    // Si no es un número válido, devolver 0
-    if (isNaN(numValue)) return '0';
+    // Verificar si es un número válido
+    if (isNaN(numValue)) {
+      return '0';
+    }
     
     // Formatear con separadores de miles
-    return numValue.toLocaleString('en-US');
-  };
+    return numValue.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  } catch (error) {
+    return '0';
+  }
+};
+
+// Formateador para números con precisión específica
+export const formatNumber = (value, precision = 0) => {
+  if (value === undefined || value === null) return '0';
   
-  /**
-   * Formatea una lista en un string separado por comas
-   * @param {Array} list - Lista a formatear
-   * @returns {string} Lista formateada
-   */
-  export const formatList = (list) => {
-    if (!list || !Array.isArray(list)) return '';
-    return list.join(', ');
-  };
-  
-  /**
-   * Formatea el tipo de propiedad para mostrar
-   * @param {string} type - Tipo de propiedad
-   * @returns {string} Tipo formateado
-   */
-  export const formatPropertyType = (type) => {
-    if (!type) return '';
+  try {
+    // Convertir a número si es un string
+    const numValue = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.-]+/g, '')) : value;
     
-    // Capitalizar primera letra de cada palabra
-    return type.split(' ').map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-    ).join(' ');
-  };
+    // Verificar si es un número válido
+    if (isNaN(numValue)) {
+      return '0';
+    }
+    
+    // Formatear con la precisión especificada
+    return numValue.toFixed(precision);
+  } catch (error) {
+    return '0';
+  }
+};
+
+export default {
+  formatDate,
+  formatCurrency,
+  formatNumber
+};
