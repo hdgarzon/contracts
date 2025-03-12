@@ -5,6 +5,7 @@ import MoneyIcon from "../assets/img/MoneyIcon.svg";
 import MultifamilyIcon from "../assets/img/MultifamilyIcon.svg";
 import MapContract from "../assets/img/MapContract.svg";
 import Calendar from "../assets/img/Calendar.svg";
+import AssignedIcon from "../assets/img/AssignedIcon.svg";
 
 export const ContractCard = ({ contract, onSelect }) => {
   // Validar datos y proporcionar valores predeterminados
@@ -19,7 +20,9 @@ export const ContractCard = ({ contract, onSelect }) => {
     value: contract.value || '0',
     bidders: contract.bidders || 0,
     status: contract.status || 'published',
-    winCleaner: contract.winCleaner || null
+    winCleaner: contract.winCleaner || null,
+    // Add this line to include the scopeOfWork
+    scopeOfWork: contract.scopeOfWork || 'No scope information available'
   };
 
   // Determinar si el contrato está asignado
@@ -27,30 +30,30 @@ export const ContractCard = ({ contract, onSelect }) => {
 
   return (
     <div 
-      className={`border rounded p-4 mb-4 relative overflow-hidden ${isAssigned ? 'bg-[#BDBDBD]' : 'bg-white'}`}
+      className={`border rounded p-4 mb-4 relative overflow-hidden ${isAssigned ? 'bg-[#f8f8f8]' : 'bg-white'}`}
     >
       {/* Cinta "Assigned" si el contrato tiene estatus "assigned" */}
       {isAssigned && (
-        <div className="absolute top-0 right-0 transform translate-y-12 translate-x-12 rotate-45 bg-purple-500 text-white px-10 py-1 font-semibold text-sm z-10">
+        <div className="absolute top-[-25px] right-[10px] transform translate-y-12 translate-x-12 rotate-45 bg-[#DC6BBC] text-white px-10 py-1 font-semibold text-sm z-10">
           Assigned
         </div>
       )}
       
-      <div className="flex items-start mb-4 bg-blue-100 p-4">
+      <div className={`flex items-start mb-4  p-4 ${isAssigned ? 'bg-[#EBEDF0]' : 'bg-blue-100'}`}>
         <div className="bg-company rounded mr-4">
           <div className="text-white">
             <div className="flex justify-center">
               <img
-                src={TurnOverIcon}
-                alt="Turn Over Icon"
+                src={isAssigned ? AssignedIcon : TurnOverIcon}
+                alt="Contract Icon"
                 className="w-50 mx-auto block"
               />
             </div>
           </div>
         </div>
-        <div className="flex-1 ">
+        <div className="flex-1">
           <div className="flex justify-start items-center">
-            <h3 className="text-lg font-semibold text-company">
+            <h3 className={`text-lg font-semibold ${isAssigned ? 'text-gray-500' : 'text-company'}`}>
               {safeContract.name}
             </h3>
             <span className="text-gray-500 px-4 text-sm">ID: {safeContract.id}</span>
@@ -58,12 +61,10 @@ export const ContractCard = ({ contract, onSelect }) => {
           <div className="flex items-center text-sm text-gray-500 mt-1">
             <img src={ViewsContracts} alt="Views Contracts" className="pr-2" />
             {isAssigned && safeContract.winCleaner ? (
-              // Mostrar el nombre del limpiador asignado
               <div>
-                <span className="font-bold text-gray-600 pr-1">Michael Smith</span>
+                <span className="font-bold text-gray-500 pr-1">Michael Smith</span>
               </div>
             ) : (
-              // Mostrar el número de licitadores
               <div>
                 <span className="font-bold text-gray-600 pr-1">
                   {safeContract.bidders}{" "}
@@ -74,7 +75,6 @@ export const ContractCard = ({ contract, onSelect }) => {
           </div>
         </div>
         
-        {/* Mostrar el botón solo si el contrato NO está asignado */}
         {!isAssigned && (
           <button
             onClick={() => onSelect(safeContract)}
@@ -84,32 +84,36 @@ export const ContractCard = ({ contract, onSelect }) => {
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 text-base">
+      <div className={`grid grid-cols-1 gap-4 text-base ${isAssigned ? 'opacity-1' : 'opacity-0.1'}`}>
         <div className="flex items-center">
           <img src={MapContract} alt="Views Contracts" className="pr-2" />
-          <span className="font-bold">{safeContract.location}</span>
+          <span className={`font-bold ${isAssigned ? 'text-gray-500' : ''}`}>{safeContract.location}</span>
 
           <img src={MultifamilyIcon} alt="Views Contracts" className="px-2" />
-          <span className="font-light">Type: </span> <span className="font-bold px-2"> {safeContract.type}</span>
+          <span className={`font-light ${isAssigned ? 'text-gray-500' : ''}`}>Type: </span> 
+          <span className={`font-bold px-2 ${isAssigned ? 'text-gray-500' : ''}`}>{safeContract.type}</span>
 
-          <span className="ml-8">Unit count: </span> <span className="font-bold px-2"> {safeContract.unitCount}</span>
+          <span className={`ml-8 ${isAssigned ? 'text-gray-500' : ''}`}>Unit count: </span> 
+          <span className={`font-bold px-2 ${isAssigned ? 'text-gray-500' : ''}`}>{safeContract.unitCount}</span>
         </div>
 
         <div className="flex items-center">
           <img src={Calendar} alt="Views Contracts" className="pr-2" />
-          <span className="font-light">Expected Start Date: </span> <span className="font-bold px-2"> {safeContract.startDate}</span>
+          <span className={`font-light ${isAssigned ? 'text-gray-500' : ''}`}>Expected Start Date: </span> 
+          <span className={`font-bold px-2 ${isAssigned ? 'text-gray-500' : ''}`}>{safeContract.startDate}</span>
         </div>
 
         <div className="flex items-center">
           <img src={Calendar} alt="Views Contracts" className="pr-2" />
-          <span className="font-light">Estimated # Jobs per month:</span> <span className="font-bold px-2"> {safeContract.jobsPerMonth}</span>
+          <span className={`font-light ${isAssigned ? 'text-gray-500' : ''}`}>Estimated # Jobs per month:</span> 
+          <span className={`font-bold px-2 ${isAssigned ? 'text-gray-500' : ''}`}>{safeContract.jobsPerMonth}</span>
         </div>
 
         <div className="flex items-center">
           <img src={MoneyIcon} alt="Views Contracts" className="pr-2" />
-          <span className="font-light"> 
+          <span className={`font-light ${isAssigned ? 'text-gray-500' : ''}`}> 
             Estimated Annual Contract Value:{" "}
-            <span className="text-green-600 font-bold px-2">USD ${safeContract.value}</span>
+            <span className={`font-bold px-2 ${isAssigned ? 'text-gray-500' : 'text-green-600'}`}>USD ${safeContract.value}</span>
           </span>
         </div>
       </div>

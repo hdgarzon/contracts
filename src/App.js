@@ -10,6 +10,7 @@ import EliteMemberImg from "./assets/img/EliteMember.svg";
 import CalendarImg from "./assets/img/Calendar.svg";
 import { useContracts } from "./hooks/useContracts";
 import SimplePlacesAutocomplete from './components/SimplePlacesAutocomplete';
+import { applicationService } from './services/api';
 
 const CleaningApp = () => {
   const [view, setView] = useState("list");
@@ -17,11 +18,12 @@ const CleaningApp = () => {
   const [selectedContract, setSelectedContract] = useState(null);
   const [showLoginModal, setShowLoginModal] = useState(true);
   const [showApplicationModal, setShowApplicationModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
   // Usar el hook personalizado para contratos
   const { 
     contracts, 
-    loading: isLoading, 
+    loading: isContractsLoading, 
     error, 
     filters: activeFilters, 
     updateFilter, 
@@ -128,30 +130,49 @@ const CleaningApp = () => {
     clearFilters(filterOptions);
   };
 
-  // Handle contract selection
+  // Manejar selección de contrato
   const handleContractSelect = (contract) => {
     setSelectedContract(contract);
     setView("detail");
   };
 
-  // Handle apply button click
+  // Manejar clic en botón de aplicar
   const handleApply = () => {
     setShowApplicationModal(true);
   };
 
-  // Handle application submission
-  const handleSubmitApplication = (formData) => {
-    // Aquí se podría conectar con la API para enviar la aplicación
-    console.log("Datos del formulario enviados:", formData);
-
-    // Simular proceso de envío
-    setTimeout(() => {
+  // Manejar envío de aplicación
+  const handleSubmitApplication = async (formData) => {
+    // Mostrar estado de carga
+    setIsLoading(true);
+    
+    try {
+      // Registrar los datos del formulario para depuración
+      console.log("Datos del formulario de aplicación:", formData);
+      
+      // Enviar la aplicación usando el servicio de aplicación
+      const response = await applicationService.submitApplication(
+        selectedContract.id, 
+        formData
+      );
+      
+      console.log("Resultado del envío de aplicación:", response);
+      
+      // Ocultar el modal de aplicación y mostrar confirmación
       setShowApplicationModal(false);
       setView("confirmation");
-    }, 1000);
+    } catch (error) {
+      console.error("Error al enviar aplicación:", error);
+      
+      // Se podría agregar manejo de errores aquí, como mostrar un mensaje de error
+      alert("Hubo un error al enviar tu aplicación. Por favor, intenta de nuevo.");
+    } finally {
+      // Ocultar estado de carga
+      setIsLoading(false);
+    }
   };
 
-  // Handle back button click
+  // Manejar clic en botón de regresar
   const handleBack = () => {
     if (view === "detail") {
       setView("list");
@@ -160,7 +181,7 @@ const CleaningApp = () => {
     }
   };
 
-  // Close login modal
+  // Cerrar modal de login
   const closeLoginModal = () => {
     setShowLoginModal(false);
   };
@@ -174,12 +195,12 @@ const CleaningApp = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Loading State */}
-      {isLoading && (
+      {/* Estado de carga */}
+      {(isLoading || isContractsLoading) && (
         <div className="fixed inset-0 bg-white bg-opacity-80 flex items-center justify-center z-50">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-900 mx-auto"></div>
-            <p className="mt-4 text-lg">Loading...</p>
+            <p className="mt-4 text-lg">Cargando...</p>
           </div>
         </div>
       )}
@@ -350,7 +371,7 @@ const CleaningApp = () => {
                     />
                   ))
                 ) : (
-                  !isLoading && (
+                  !isContractsLoading && (
                     <p className="text-gray-500">No contracts found matching your criteria.</p>
                   )
                 )}

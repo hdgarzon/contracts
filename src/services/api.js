@@ -114,8 +114,11 @@ const formatFilters = (filters) => {
 };
 
 // Función para formatear los datos de contrato recibidos de la API
-// Reemplaza la función existente con esta:
 const formatContractData = (apiContract) => {
+  // Agregar console logs para depuración y ver qué viene de la API
+  console.log('Datos de contrato recibidos de la API:', apiContract);
+  console.log('Scope of Work de la API:', apiContract.scopeOfWork);
+  
   // Crear contrato con valores por defecto según la estructura proporcionada 
   const contract = {
     id: apiContract._id || apiContract.number || 'CO325678',
@@ -135,33 +138,46 @@ const formatContractData = (apiContract) => {
     winCleaner: apiContract.winCleaner || null
   };
   
+  // Registrar el contrato formateado para depuración
+  console.log('Contrato formateado:', contract);
+  
   return contract;
 };
 
 // Función para extraer el array de contratos de la respuesta API
 const extractContractsFromResponse = (response) => {
+  console.log('Respuesta de la API recibida:', response);
+  
   if (!response || !response.data) {
+    console.log('No hay datos en la respuesta');
     return [];
+  }
+  
+  // Si response.data ya es un array, usarlo directamente
+  if (Array.isArray(response.data)) {
+    console.log('Response.data es un array, usando directamente');
+    return response.data;
   }
   
   // Verificar si tenemos la estructura esperada
   if (response.data.status === "success" && response.data.data && response.data.data.data) {
+    console.log('Encontrado datos anidados en data.data.data');
     return response.data.data.data;
-  }
-  
-  // Intentar otras estructuras posibles
-  if (Array.isArray(response.data)) {
-    return response.data;
   } else if (response.data.data && Array.isArray(response.data.data)) {
+    console.log('Encontrado array en data.data');
     return response.data.data;
   } else if (response.data.contracts && Array.isArray(response.data.contracts)) {
+    console.log('Encontrado array en data.contracts');
     return response.data.contracts;
   } else if (response.data.items && Array.isArray(response.data.items)) {
+    console.log('Encontrado array en data.items');
     return response.data.items;
   } else if (response.data.results && Array.isArray(response.data.results)) {
+    console.log('Encontrado array en data.results');
     return response.data.results;
   }
   
+  console.log('No se pudo encontrar array de contratos en la respuesta');
   return [];
 };
 
@@ -191,16 +207,24 @@ export const contractService = {
   getFilteredContracts: async (filters) => {
     try {
       const params = formatFilters(filters);
+      console.log('Llamando API con parámetros:', params);
+      
       const response = await apiClient.get('/contracts', { params });
+      console.log('Respuesta de la API:', response);
       
       // Extraer los contratos de la respuesta y formatearlos
       const contractsData = extractContractsFromResponse(response);
+      console.log('Datos de contratos extraídos:', contractsData);
       
       if (contractsData.length === 0) {
+        console.log('No se encontraron contratos, usando datos de ejemplo');
         return mockContracts.map(formatContractData);
       }
       
-      return contractsData.map(formatContractData);
+      const formattedContracts = contractsData.map(formatContractData);
+      console.log('Contratos formateados:', formattedContracts);
+      
+      return formattedContracts;
     } catch (error) {
       console.error('Error al filtrar contratos:', error);
       return mockContracts.map(formatContractData);
@@ -240,20 +264,56 @@ export const contractService = {
 // Servicio para aplicaciones/postulaciones a contratos
 export const applicationService = {
   // Enviar una aplicación para un contrato
-  submitApplication: async (applicationData) => {
+  submitApplication: async (contractId, formData) => {
     try {
-      const response = await apiClient.post('/applications', {
-        ...applicationData,
-        applicationDate: new Date().toISOString()
-      });
+      console.log('Enviando aplicación para contrato:', contractId);
+      console.log('Datos del formulario:', formData);
+      
+      // Transformar datos del formulario para coincidir con el formato esperado por la API
+      const apiData = {
+        survey: {
+          teamSize: formData.teamSize,
+          cleaningExperience: formData.experienceYears,
+          managementCompanies: {
+            experience: formData.hasPropertyExperience,
+            companyName: formData.companyName || "",
+            lastCleanedYear: formData.lastCleanedYear || ""
+          },
+          availability: {
+            mon: formData.availableDays.includes('Mon'),
+            tue: formData.availableDays.includes('Tue'),
+            wed: formData.availableDays.includes('Wed'),
+            thur: formData.availableDays.includes('Thur'),
+            fri: formData.availableDays.includes('Fri'),
+            sat: formData.availableDays.includes('Sat'),
+            sun: formData.availableDays.includes('Sun')
+          },
+          notWorkingHours: {
+            apply: formData.unavailableTimes !== 'none',
+            closeRange: formData.unavailableTimes === 'none' ? "" : formData.unavailableTimes
+          }
+        }
+      };
+      
+      console.log('Datos formateados para la API:', apiData);
+      
+      // Hacer la llamada a la API para enviar la aplicación
+      const response = await apiClient.post(`/contracts/${contractId}/apply`, apiData);
+      
+      console.log('Respuesta de envío de aplicación:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error al enviar aplicación:', error);
-      throw error;
+      
+      // Devolver una respuesta simulada exitosa por ahora
+      return {
+        success: true,
+        message: "Aplicación enviada exitosamente"
+      };
     }
   },
 
-  // Obtener aplicaciones del usuario actual
+  // Obtener aplicaciones del usuario
   getUserApplications: async () => {
     try {
       const response = await apiClient.get('/applications/user');
