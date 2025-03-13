@@ -1,12 +1,12 @@
 import React from 'react';
-import LoginImg from "../assets/img/LoginIconPinch.svg";
+// import LoginImg from "../assets/img/LoginIconPinch.svg";
 
 export const LoginModal = ({ onClose }) => (
   <div className="fixed inset-0 bg-gray-500 bg-opacity-20 flex items-center justify-center z-50">
     <div className="bg-white p-6 w-full max-w-md">
       <div className="flex justify-center mb-4">
         <div className="rounded-full p-3">
-          <img  src={LoginImg} alt="User" className="rounded-full w-40" />
+          {/* <img  src={LoginImg} alt="User" className="rounded-full w-40" /> */}
         </div>
       </div>
       

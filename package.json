@@ -9,6 +9,7 @@
     "@testing-library/user-event": "^14.5.1",
     "axios": "^1.8.1",
     "lucide-react": "^0.292.0",
+    "mime-types": "^2.1.35",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-query": "^3.39.3",
@@ -17,7 +18,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "react-scripts build && node simple-inline.js",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -41,8 +42,16 @@
   },
   "devDependencies": {
     "autoprefixer": "^10.4.16",
+    "customize-cra": "^1.0.0",
+    "html-inline": "^1.2.0",
+    "html-inline-css-webpack-plugin": "^1.11.2",
+    "html-inline-script-webpack-plugin": "^3.2.1",
+    "html-webpack-plugin": "^5.6.3",
+    "inliner": "^1.13.1",
     "postcss": "^8.4.31",
     "postcss-loader": "^7.3.3",
+    "react-app-rewired": "^2.2.1",
+    "svgo": "^3.3.2",
     "tailwindcss": "^3.3.5"
   }
 }
