@@ -24,7 +24,7 @@ const CleaningApp = () => {
   };
 
   const [view, setView] = useState("list");
-  const [membership, setMembership] = useState("max");
+  const [membership, setMembership] = useState("quickpay");
   const [selectedContract, setSelectedContract] = useState(null);
   const [showLoginModal, setShowLoginModal] = useState(true);
   const [showApplicationModal, setShowApplicationModal] = useState(false);
@@ -45,6 +45,12 @@ const CleaningApp = () => {
   // En el componente CleaningApp, añade el nuevo estado de error
   const [communicationError, setCommunicationError] = useState(null);
 
+  // Verificar si la membresía es válida (Max, Elite o QuickPay)
+  const isValidMembership = (membershipType) => {
+    const validMemberships = ['max', 'elite', 'quickpay'];
+    return validMemberships.includes(membershipType.toLowerCase());
+  };
+
 // En tu useEffect de comunicación con Wix
 useEffect(() => {
   console.log("Inicializando comunicación con Wix...");
@@ -55,7 +61,12 @@ useEffect(() => {
   if (USE_FIXED_TOKEN) {
     setAuthToken(); // Llamar sin parámetros establecerá el token fijo
     setTokenReady(true);
-    setShowLoginModal(false); // Ocultar modal de login ya que tenemos token
+    // No cerrar el modal de login automáticamente, verificar la membresía primero
+    if (isValidMembership(membership)) {
+      setShowLoginModal(false);
+    } else {
+      setShowLoginModal(true);
+    }
     console.log("Usando token fijo para desarrollo, no se espera comunicación con Wix");
     return;
   }
@@ -80,12 +91,23 @@ useEffect(() => {
         // Establecer el tipo de membresía basado en el perfil
         if (userProfile.membershipType) {
           console.log("Tipo de membresía:", userProfile.membershipType);
-          setMembership(userProfile.membershipType.toLowerCase());
+          const membershipType = userProfile.membershipType.toLowerCase();
+          setMembership(membershipType);
+          
+          // Verificar si la membresía es válida para cerrar el modal de login
+          if (isValidMembership(membershipType)) {
+            setShowLoginModal(false);
+          } else {
+            setShowLoginModal(true);
+          }
+        } else {
+          // Si no hay tipo de membresía, mantener el modal abierto
+          setShowLoginModal(true);
         }
+      } else {
+        // Si no hay perfil de usuario, mantener el modal abierto
+        setShowLoginModal(true);
       }
-      
-      // Cerrar el modal de login ya que tenemos la sesión
-      setShowLoginModal(false);
     }
   });
   
@@ -103,7 +125,7 @@ useEffect(() => {
       clearTimeout(communicationTimeout);
     }
   };
-}, [tokenReady, communicationError]);
+}, [tokenReady, communicationError, membership]);
 
   const updateDateRange = (dateOption) => {
     const now = new Date();
@@ -256,7 +278,7 @@ useEffect(() => {
         <div className="fixed inset-0 bg-white bg-opacity-80 flex items-center justify-center z-50">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-900 mx-auto"></div>
-            <p className="mt-4 text-lg">Cargando...</p>
+            <p className="mt-4 text-lg">Loading...</p>
           </div>
         </div>
       )}

@@ -6,18 +6,19 @@ export const LoginModal = ({ onClose }) => (
     <div className="bg-white p-6 w-full max-w-md">
       <div className="flex justify-center mb-4">
         <div className="rounded-full p-3">
-          {/* <img  src={LoginImg} alt="User" className="rounded-full w-40" /> */}
         </div>
       </div>
       
       <h2 className="text-xl text-company font-semibold text-center mb-2">Hey PINCH Pro!</h2>
-      <p className="text-center font-light text-gray-600 mb-4">Be Sure To Log In To View The Opportunities Board.</p>
+      <p className="text-center font-light text-gray-600 mb-4">
+        You need a Max, Elite or QuickPay membership to access the Opportunities Dashboard.
+      </p>
       
       <button 
         onClick={onClose}
-        className="w-full bg-transparent text-blue py-2 rounded"
+        className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
       >
-        LOGIN HERE
+        UPDATE MEMBERSHIP
       </button>
     </div>
   </div>

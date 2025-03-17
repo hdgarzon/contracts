@@ -380,8 +380,8 @@ export const applicationService = {
       };
 
       // Hacer la llamada a la API para enviar la aplicación
-      const response = await apiClient.post(
-        `/contracts/${contractId}/apply`,
+      const response = await apiClient.put(
+        `/contracts/${contractId}`,
         apiData
       );
 
