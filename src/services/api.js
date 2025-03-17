@@ -45,17 +45,25 @@ apiClient.interceptors.request.use(
 );
 
 // Interceptor para manejar respuestas
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    // No mostrar errores detallados en producción
-    if (ENV === 'prod') {
-      console.error("Error en API");
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = getAuthToken();
+    
+    console.log("URL solicitada:", config.url);
+    console.log("Parámetros:", config.params);
+    console.log("¿Hay token?", !!token);
+    
+    if (token) {
+      // Formato correcto para el token JWT
+      config.headers.Authorization = `Bearer ${token}`;
+      console.log("Token incluido (primeros 15 caracteres):", token.substring(0, 15) + "...");
     } else {
-      console.error("Error en API:", error);
+      console.warn("No hay token disponible para la solicitud");
     }
-    return Promise.reject(error);
-  }
+    
+    return config;
+  },
+  (error) => Promise.reject(error)
 );
 
 // Función para formatear los filtros según la estructura esperada por la API
@@ -267,20 +275,42 @@ export const contractService = {
       // Verificar autenticación primero
       const token = getAuthToken();
       if (!token && ENV !== 'prod') {
+        console.warn("No hay token disponible para getFilteredContracts");
         // Return empty array instead of mock data
         return [];
       }
       
       const params = formatFilters(filters);
-      const response = await apiClient.get("/contracts", { params });
-  
-      // Extraer los contratos de la respuesta y formatearlos
-      const contractsData = extractContractsFromResponse(response);
-  
-      // Return empty array if no contracts are found, don't fallback to mockContracts
-      const formattedContracts = contractsData.map(formatContractData);
-      return formattedContracts;
+      
+      // Log detallado para depuración
+      console.log("Solicitando contratos filtrados con parámetros:", params);
+      
+      try {
+        const response = await apiClient.get("/contracts", { params });
+        
+        // Extraer los contratos de la respuesta y formatearlos
+        const contractsData = extractContractsFromResponse(response);
+        const formattedContracts = contractsData.map(formatContractData);
+        
+        console.log("Contratos recibidos:", formattedContracts.length);
+        return formattedContracts;
+      } catch (apiError) {
+        console.error("Error específico de API:", apiError.response?.status, apiError.response?.data);
+        
+        // Si el error es 401 o 403, podría ser un problema con el token
+        if (apiError.response?.status === 401 || apiError.response?.status === 403) {
+          console.error("Error de autenticación, posible token inválido");
+        }
+        
+        // Si el error es 500, es un problema del servidor
+        if (apiError.response?.status === 500) {
+          console.error("Error del servidor:", apiError.response?.data);
+        }
+        
+        throw apiError; // Re-lanzar para manejo adicional
+      }
     } catch (error) {
+      console.error("Error general en getFilteredContracts:", error);
       // Return empty array instead of mock data
       return [];
     }

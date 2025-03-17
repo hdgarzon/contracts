@@ -45,71 +45,65 @@ const CleaningApp = () => {
   // En el componente CleaningApp, añade el nuevo estado de error
   const [communicationError, setCommunicationError] = useState(null);
 
-  // Listener para mensajes de Wix
-  useEffect(() => {
-    console.log("Inicializando comunicación con Wix...");
-
-    let communicationTimeout;
-
-    // Si estamos usando token fijo, no necesitamos esperar mensajes de Wix
-    if (USE_FIXED_TOKEN) {
-      setAuthToken(); // Llamar sin parámetros establecerá el token fijo
-      setTokenReady(true);
-      setShowLoginModal(false); // Ocultar modal de login ya que tenemos token
-      console.log(
-        "Usando token fijo para desarrollo, no se espera comunicación con Wix"
-      );
+// En tu useEffect de comunicación con Wix
+useEffect(() => {
+  console.log("Inicializando comunicación con Wix...");
+  
+  let communicationTimeout;
+  
+  // Si estamos usando token fijo, no necesitamos esperar mensajes de Wix
+  if (USE_FIXED_TOKEN) {
+    setAuthToken(); // Llamar sin parámetros establecerá el token fijo
+    setTokenReady(true);
+    setShowLoginModal(false); // Ocultar modal de login ya que tenemos token
+    console.log("Usando token fijo para desarrollo, no se espera comunicación con Wix");
+    return;
+  }
+  
+  // Inicializar el servicio de token de Wix
+  WixTokenService.initialize(({ token, userProfile, error: tokenError }) => {
+    if (tokenError) {
+      setCommunicationError("Hubo un problema al comunicarse con Wix. Por favor, intenta recargar la página.");
       return;
     }
-
-    // Inicializar el servicio de token de Wix
-    WixTokenService.initialize(({ token, userProfile, error: tokenError }) => {
-      if (tokenError) {
-        setCommunicationError(
-          "Hubo un problema al comunicarse con Wix. Por favor, intenta recargar la página."
-        );
-        return;
-      }
-
-      console.log("Token recibido desde Wix", token ? "✓" : "✗");
-
-      if (token) {
-        setTokenReady(true);
-
-        // Si el userProfile existe, actualizar el estado
-        if (userProfile) {
-          console.log("Perfil de usuario recibido:", userProfile);
-          setUserProfile(userProfile);
-
-          // Establecer el tipo de membresía basado en el perfil
-          if (userProfile.membershipType) {
-            console.log("Tipo de membresía:", userProfile.membershipType);
-            setMembership(userProfile.membershipType.toLowerCase());
-          }
+    
+    console.log("Token recibido desde Wix", token ? "✓" : "✗");
+    
+    if (token) {
+      setTokenReady(true);
+      
+      // Si el userProfile existe, actualizar el estado
+      if (userProfile) {
+        console.log("Perfil de usuario recibido:", userProfile);
+        setUserProfile(userProfile);
+        
+        // Establecer el tipo de membresía basado en el perfil
+        if (userProfile.membershipType) {
+          console.log("Tipo de membresía:", userProfile.membershipType);
+          setMembership(userProfile.membershipType.toLowerCase());
         }
-
-        // Cerrar el modal de login ya que tenemos la sesión
-        setShowLoginModal(false);
       }
-    });
-
-    // Timer para mostrar mensaje al usuario si no se recibe respuesta de Wix
-    communicationTimeout = setTimeout(() => {
-      if (!tokenReady && !communicationError) {
-        setCommunicationError(
-          "No se pudo establecer comunicación con Wix. Por favor, recarga la página."
-        );
-      }
-    }, 15000);
-
-    // Limpiar el listener y timer al desmontar
-    return () => {
-      WixTokenService.cleanup();
-      if (communicationTimeout) {
-        clearTimeout(communicationTimeout);
-      }
-    };
-  }, [tokenReady, communicationError]);
+      
+      // Cerrar el modal de login ya que tenemos la sesión
+      setShowLoginModal(false);
+    }
+  });
+  
+  // Timer para mostrar mensaje al usuario si no se recibe respuesta de Wix
+  communicationTimeout = setTimeout(() => {
+    if (!tokenReady && !communicationError) {
+      setCommunicationError("No se pudo establecer comunicación con Wix. Por favor, recarga la página.");
+    }
+  }, 15000);
+  
+  // Limpiar el listener y timer al desmontar
+  return () => {
+    WixTokenService.cleanup();
+    if (communicationTimeout) {
+      clearTimeout(communicationTimeout);
+    }
+  };
+}, [tokenReady, communicationError]);
 
   const updateDateRange = (dateOption) => {
     const now = new Date();
