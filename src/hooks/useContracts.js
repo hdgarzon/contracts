@@ -1,4 +1,3 @@
-// src/hooks/useContracts.js
 import { useState, useEffect, useCallback } from 'react';
 import { contractService } from '../services/api';
 import { contracts as mockContracts } from '../data/mockData';
@@ -8,10 +7,24 @@ export const useContracts = (initialFilters = {}) => {
   const initialFiltersWithoutLocation = { ...initialFilters };
   delete initialFiltersWithoutLocation.location;
   
+  // Set default timeframe to 3 months and bids to False for the first call
+  const getDefaultFirstFilters = () => {
+    const now = new Date();
+    const threeMonthsLater = new Date(now);
+    threeMonthsLater.setMonth(now.getMonth() + 3);
+    
+    return {
+      ...initialFiltersWithoutLocation,
+      startDate: now.toISOString().split('T')[0],
+      endDate: threeMonthsLater.toISOString().split('T')[0],
+      bids: ['Without Bids'] // Start with "Without Bids" only
+    };
+  };
+  
   const [contracts, setContracts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filters, setFilters] = useState(initialFiltersWithoutLocation);
+  const [filters, setFilters] = useState(getDefaultFirstFilters());
   const [isFirstLoad, setIsFirstLoad] = useState(true);
 
   const fetchContracts = useCallback(async (currentFilters = filters) => {

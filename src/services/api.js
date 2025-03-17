@@ -69,7 +69,7 @@ const formatFilters = (filters) => {
     per_page: "20",
     startDate: "2025-01-01",
     endDate: "2025-12-10",
-    bids: "True",
+    bids: "False", // Changed default to False
     types: "Multifamily,Studio Housing",
   };
 
@@ -253,15 +253,18 @@ export const contractService = {
 
       // Extraer los contratos de la respuesta y formatearlos
       const contractsData = extractContractsFromResponse(response);
-
-      if (contractsData.length === 0) {
-        return mockContracts.map(formatContractData);
-      }
+      
+      // Agregar Datos del Mock si no hay datos de la API
+      // if (contractsData.length === 0) {
+      //   return mockContracts.map(formatContractData);
+      // }
 
       return contractsData.map(formatContractData);
     } catch (error) {
       console.error("Error al obtener contratos:", error);
-      return mockContracts.map(formatContractData);
+      // Agregar Datos del Mock si no hay datos de la API
+      // return mockContracts.map(formatContractData);
+      return [];
     }
   },
 
@@ -272,7 +275,9 @@ export const contractService = {
       const token = getAuthToken();
       if (!token && ENV !== 'prod') {
         console.warn("Sin token de autenticación. Usando datos de ejemplo para desarrollo.");
-        return mockContracts.map(formatContractData);
+        // Devolver datos de ejemplo para continuar con el desarrollo
+        // return mockContracts.map(formatContractData);
+        return [];
       }
       
       const params = formatFilters(filters);
@@ -280,10 +285,11 @@ export const contractService = {
   
       // Extraer los contratos de la respuesta y formatearlos
       const contractsData = extractContractsFromResponse(response);
-  
-      if (contractsData.length === 0) {
-        return mockContracts.map(formatContractData);
-      }
+      
+      // Si no hay datos de la API, usar datos de ejemplo
+      // if (contractsData.length === 0) {
+      //   return mockContracts.map(formatContractData);
+      // }
   
       const formattedContracts = contractsData.map(formatContractData);
       return formattedContracts;
@@ -296,7 +302,8 @@ export const contractService = {
       }
       
       // Devolver datos de ejemplo para continuar con el desarrollo
-      return mockContracts.map(formatContractData);
+      //return mockContracts.map(formatContractData);
+      return [];
     }
   },
 
@@ -324,8 +331,10 @@ export const contractService = {
       return formatContractData(contractData);
     } catch (error) {
       console.error(`Error al obtener contrato con ID ${id}:`, error);
-      const contract = mockContracts.find((c) => c.id === id);
-      return contract ? formatContractData(contract) : null;
+      // Devolver datos de ejemplo para continuar con el desarrollo
+      // const contract = mockContracts.find((c) => c.id === id);
+      // return contract ? formatContractData(contract) : null;
+      return null;
     }
   },
 };

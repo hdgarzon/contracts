@@ -18,7 +18,7 @@ const CleaningApp = () => {
     date: 'This Week',
     dateRange: '01/08/2025 - 01/15/2025',
     types: ['Multifamily', 'Studio Housing'],
-    bids: ['With bids', 'Without Bids']
+    bids: ['Without Bids']
     // No incluir location aquí para que el primer llamado no lo tenga
   };
 
