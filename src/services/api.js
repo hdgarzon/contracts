@@ -34,7 +34,6 @@ apiClient.interceptors.request.use(
       
       // Solo para depuración - remover en producción
       if (ENV !== 'prod') {
-        console.log("Enviando solicitud autenticada a:", config.url);
         console.log("Token incluido:", token.substring(0, 15) + "...");
       }
     } else {
@@ -78,11 +77,11 @@ const formatFilters = (filters) => {
 
   // Añadir location solo si está presente en los filtros
   if (filters.location) {
-    // Si es coordenadas en formato "lng,lat"
-    if (
-      typeof filters.location === "string" &&
-      filters.location.includes(",")
-    ) {
+    // Si es coordenadas en formato "lng,lat" (validar que realmente son coordenadas)
+    const isCoordinates = typeof filters.location === "string" && 
+                          /^-?\d+(\.\d+)?,-?\d+(\.\d+)?$/.test(filters.location);
+    
+    if (isCoordinates) {
       params.location = filters.location;
     }
     // Si es un objeto con lat y lng
@@ -253,17 +252,11 @@ export const contractService = {
 
       // Extraer los contratos de la respuesta y formatearlos
       const contractsData = extractContractsFromResponse(response);
-      
-      // Agregar Datos del Mock si no hay datos de la API
-      // if (contractsData.length === 0) {
-      //   return mockContracts.map(formatContractData);
-      // }
 
+      // Return empty array if no contracts are found, don't fallback to mockContracts
       return contractsData.map(formatContractData);
     } catch (error) {
-      console.error("Error al obtener contratos:", error);
-      // Agregar Datos del Mock si no hay datos de la API
-      // return mockContracts.map(formatContractData);
+      // Return empty array instead of mock data
       return [];
     }
   },
@@ -274,9 +267,7 @@ export const contractService = {
       // Verificar autenticación primero
       const token = getAuthToken();
       if (!token && ENV !== 'prod') {
-        console.warn("Sin token de autenticación. Usando datos de ejemplo para desarrollo.");
-        // Devolver datos de ejemplo para continuar con el desarrollo
-        // return mockContracts.map(formatContractData);
+        // Return empty array instead of mock data
         return [];
       }
       
@@ -285,24 +276,12 @@ export const contractService = {
   
       // Extraer los contratos de la respuesta y formatearlos
       const contractsData = extractContractsFromResponse(response);
-      
-      // Si no hay datos de la API, usar datos de ejemplo
-      // if (contractsData.length === 0) {
-      //   return mockContracts.map(formatContractData);
-      // }
   
+      // Return empty array if no contracts are found, don't fallback to mockContracts
       const formattedContracts = contractsData.map(formatContractData);
       return formattedContracts;
     } catch (error) {
-      // Si es un error 401, probablemente el token es inválido
-      if (error.response && error.response.status === 401) {
-        console.error("Error de autenticación (401). Posible token inválido o expirado.");
-      } else {
-        console.error("Error al filtrar contratos:", error);
-      }
-      
-      // Devolver datos de ejemplo para continuar con el desarrollo
-      //return mockContracts.map(formatContractData);
+      // Return empty array instead of mock data
       return [];
     }
   },
@@ -330,10 +309,7 @@ export const contractService = {
       // Formatear el contrato recibido
       return formatContractData(contractData);
     } catch (error) {
-      console.error(`Error al obtener contrato con ID ${id}:`, error);
-      // Devolver datos de ejemplo para continuar con el desarrollo
-      // const contract = mockContracts.find((c) => c.id === id);
-      // return contract ? formatContractData(contract) : null;
+      // Don't return mock data here either
       return null;
     }
   },

@@ -1,13 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
+// src/hooks/useContracts.js
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { contractService } from '../services/api';
-import { contracts as mockContracts } from '../data/mockData';
 
 export const useContracts = (initialFilters = {}) => {
   // Omitir location del filtro inicial
   const initialFiltersWithoutLocation = { ...initialFilters };
   delete initialFiltersWithoutLocation.location;
   
-  // Set default timeframe to 3 months and bids to False for the first call
+  // Configurar el período de 3 meses por defecto y bids como False para la primera llamada
   const getDefaultFirstFilters = () => {
     const now = new Date();
     const threeMonthsLater = new Date(now);
@@ -17,29 +17,47 @@ export const useContracts = (initialFilters = {}) => {
       ...initialFiltersWithoutLocation,
       startDate: now.toISOString().split('T')[0],
       endDate: threeMonthsLater.toISOString().split('T')[0],
-      bids: ['Without Bids'] // Start with "Without Bids" only
+      bids: ['Without Bids'] // Comenzar con "Without Bids" solamente
     };
   };
   
+  // Estados para controlar los contratos, carga, errores y filtros
   const [contracts, setContracts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState(getDefaultFirstFilters());
   const [isFirstLoad, setIsFirstLoad] = useState(true);
+  
+  // Referencia para controlar si es la primera renderización
+  const isInitialRender = useRef(true);
+  // Referencia para almacenar la última solicitud de filtros para evitar llamadas duplicadas
+  const lastFetchRef = useRef(null);
 
+  // Función para obtener los contratos de la API
   const fetchContracts = useCallback(async (currentFilters = filters) => {
+    // Crear una copia de los filtros para no modificar el original
+    const filtersToUse = { ...currentFilters };
+    
+    // Si es la primera carga, eliminar el parámetro location
+    if (isFirstLoad) {
+      delete filtersToUse.location;
+      setIsFirstLoad(false);
+    }
+    
+    // Crear una cadena que represente los filtros para comparación
+    const filtersString = JSON.stringify(filtersToUse);
+    
+    // Si ya hicimos esta solicitud exacta, no la repetimos
+    if (lastFetchRef.current === filtersString) {
+      return;
+    }
+    
+    // Guardar esta solicitud como la última realizada
+    lastFetchRef.current = filtersString;
+    
     setLoading(true);
+    
     try {
-      // Si es la primera carga, asegurarse de que no se envía el parámetro location
-      const filtersToUse = isFirstLoad 
-        ? { ...currentFilters }
-        : currentFilters;
-        
-      if (isFirstLoad) {
-        delete filtersToUse.location;
-        setIsFirstLoad(false);
-      }
-      
       const result = await contractService.getFilteredContracts(filtersToUse);
       
       if (!result || !Array.isArray(result)) {
@@ -50,7 +68,6 @@ export const useContracts = (initialFilters = {}) => {
       
       setError(null);
     } catch (err) {
-      console.error("Error fetching contracts:", err);
       setError("Failed to load contracts. Please try again later.");
       setContracts([]);
     } finally {
@@ -58,10 +75,13 @@ export const useContracts = (initialFilters = {}) => {
     }
   }, [filters, isFirstLoad]);
 
-  // Cargar contratos cuando cambian los filtros
+  // Efecto para la carga inicial de datos - solo se ejecuta una vez
   useEffect(() => {
-    fetchContracts();
-  }, [fetchContracts]);
+    if (isInitialRender.current) {
+      fetchContracts();
+      isInitialRender.current = false;
+    }
+  }, []); // Array de dependencias vacío para ejecutar solo en el montaje inicial
 
   // Función para actualizar un filtro específico
   const updateFilter = useCallback((key, value) => {

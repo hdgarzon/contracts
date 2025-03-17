@@ -159,12 +159,20 @@ const CleaningApp = () => {
     updateFilter("bids", newBids);
   };
 
-  // Manejador específico para location
-  const handleLocationChange = (coordinates, details) => {
-    // Solo actualizar location cuando el usuario selecciona explícitamente una ubicación
-    updateFilter("location", coordinates);
-    updateFilter("displayLocation", details.displayName);
-  };
+// Manejador específico para location
+const handleLocationChange = (coordinates, details) => {
+  
+  // Solo actualizar location cuando el usuario selecciona explícitamente una ubicación
+  if (coordinates && details) {
+    // Verify coordinates are in the correct format (lng,lat)
+    if (typeof coordinates === 'string' && /^-?\d+(\.\d+)?,-?\d+(\.\d+)?$/.test(coordinates)) {
+      updateFilter("location", coordinates);
+      updateFilter("displayLocation", details.displayName);
+    } else {
+      console.warn("Invalid coordinates format:", coordinates);
+    }
+  }
+};
 
   const clearAllFilters = () => {
     clearFilters(initialFilterOptions);
