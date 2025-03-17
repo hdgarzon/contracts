@@ -11,14 +11,15 @@ import { applicationService } from "./services/api";
 import { setAuthToken } from "./services/api-auth";
 import MembershipContent from "./components/MembershipContent";
 import { USE_FIXED_TOKEN } from "./config/env";
+import WixTokenService from "./services/WixTokenService";
 
 const CleaningApp = () => {
   // Opciones de filtro iniciales - sin incluir location
   const initialFilterOptions = {
-    date: 'This Week',
-    dateRange: '01/08/2025 - 01/15/2025',
-    types: ['Multifamily', 'Studio Housing'],
-    bids: ['Without Bids']
+    date: "This Week",
+    dateRange: "01/08/2025 - 01/15/2025",
+    types: ["Multifamily", "Studio Housing"],
+    bids: ["Without Bids"],
     // No incluir location aquí para que el primer llamado no lo tenga
   };
 
@@ -41,61 +42,74 @@ const CleaningApp = () => {
     applyFilters,
   } = useContracts(initialFilterOptions);
 
+  // En el componente CleaningApp, añade el nuevo estado de error
+  const [communicationError, setCommunicationError] = useState(null);
+
   // Listener para mensajes de Wix
   useEffect(() => {
+    console.log("Inicializando comunicación con Wix...");
+
+    let communicationTimeout;
+
     // Si estamos usando token fijo, no necesitamos esperar mensajes de Wix
     if (USE_FIXED_TOKEN) {
       setAuthToken(); // Llamar sin parámetros establecerá el token fijo
       setTokenReady(true);
       setShowLoginModal(false); // Ocultar modal de login ya que tenemos token
+      console.log(
+        "Usando token fijo para desarrollo, no se espera comunicación con Wix"
+      );
+      return;
     }
-    const handleMessage = (event) => {
-      // Verificar que el mensaje proviene de Wix
-      if (event.data && event.data.token) {
-        console.log("Mensaje recibido de Wix:", event.data);
 
-        // Guardar el token para las llamadas API
-        setAuthToken(event.data.token);
+    // Inicializar el servicio de token de Wix
+    WixTokenService.initialize(({ token, userProfile, error: tokenError }) => {
+      if (tokenError) {
+        setCommunicationError(
+          "Hubo un problema al comunicarse con Wix. Por favor, intenta recargar la página."
+        );
+        return;
+      }
+
+      console.log("Token recibido desde Wix", token ? "✓" : "✗");
+
+      if (token) {
         setTokenReady(true);
 
-        // Actualizar información del perfil
-        if (event.data.userProfile) {
-          setUserProfile(event.data.userProfile);
+        // Si el userProfile existe, actualizar el estado
+        if (userProfile) {
+          console.log("Perfil de usuario recibido:", userProfile);
+          setUserProfile(userProfile);
 
-          // Establecer el tipo de membresía si está disponible
-          if (event.data.userProfile.membershipType) {
-            setMembership(event.data.userProfile.membershipType.toLowerCase());
+          // Establecer el tipo de membresía basado en el perfil
+          if (userProfile.membershipType) {
+            console.log("Tipo de membresía:", userProfile.membershipType);
+            setMembership(userProfile.membershipType.toLowerCase());
           }
         }
 
-        // Cerrar el modal de login ya que ahora tenemos la sesión
+        // Cerrar el modal de login ya que tenemos la sesión
         setShowLoginModal(false);
       }
-    };
+    });
 
-    // Añadir el listener
-    window.addEventListener("message", handleMessage);
-
-    // Notificar a Wix que la app está lista para recibir datos
-    window.parent.postMessage(
-      {
-        applicationId: "pinch-contracts-app", // Debe coincidir con lo validado en Wix
-        ready: true,
-      },
-      "*"
-    );
-
-    // Timer de respaldo para ocultar el modal de login
-    const timer = setTimeout(() => {
-      setShowLoginModal(false);
-    }, 2000);
+    // Timer para mostrar mensaje al usuario si no se recibe respuesta de Wix
+    communicationTimeout = setTimeout(() => {
+      if (!tokenReady && !communicationError) {
+        setCommunicationError(
+          "No se pudo establecer comunicación con Wix. Por favor, recarga la página."
+        );
+      }
+    }, 15000);
 
     // Limpiar el listener y timer al desmontar
     return () => {
-      window.removeEventListener("message", handleMessage);
-      clearTimeout(timer);
+      WixTokenService.cleanup();
+      if (communicationTimeout) {
+        clearTimeout(communicationTimeout);
+      }
     };
-  }, []);
+  }, [tokenReady, communicationError]);
 
   const updateDateRange = (dateOption) => {
     const now = new Date();
@@ -159,20 +173,22 @@ const CleaningApp = () => {
     updateFilter("bids", newBids);
   };
 
-// Manejador específico para location
-const handleLocationChange = (coordinates, details) => {
-  
-  // Solo actualizar location cuando el usuario selecciona explícitamente una ubicación
-  if (coordinates && details) {
-    // Verify coordinates are in the correct format (lng,lat)
-    if (typeof coordinates === 'string' && /^-?\d+(\.\d+)?,-?\d+(\.\d+)?$/.test(coordinates)) {
-      updateFilter("location", coordinates);
-      updateFilter("displayLocation", details.displayName);
-    } else {
-      console.warn("Invalid coordinates format:", coordinates);
+  // Manejador específico para location
+  const handleLocationChange = (coordinates, details) => {
+    // Solo actualizar location cuando el usuario selecciona explícitamente una ubicación
+    if (coordinates && details) {
+      // Verify coordinates are in the correct format (lng,lat)
+      if (
+        typeof coordinates === "string" &&
+        /^-?\d+(\.\d+)?,-?\d+(\.\d+)?$/.test(coordinates)
+      ) {
+        updateFilter("location", coordinates);
+        updateFilter("displayLocation", details.displayName);
+      } else {
+        console.warn("Invalid coordinates format:", coordinates);
+      }
     }
-  }
-};
+  };
 
   const clearAllFilters = () => {
     clearFilters(initialFilterOptions);
@@ -227,6 +243,21 @@ const handleLocationChange = (coordinates, details) => {
 
   return (
     <div className="min-h-screen bg-white">
+      {communicationError && (
+        <div className="fixed inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50">
+          <div className="bg-red-100 p-6 rounded-lg shadow-lg max-w-md text-center">
+            <h2 className="text-xl font-semibold mb-4 text-red-800">
+              Error de comunicación
+            </h2>
+            <p className="text-red-600 mb-6">{communicationError}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+              Recargar página
+            </button>
+          </div>
+        </div>
+      )}
       {(isLoading || isContractsLoading) && (
         <div className="fixed inset-0 bg-white bg-opacity-80 flex items-center justify-center z-50">
           <div className="text-center">
@@ -238,8 +269,7 @@ const handleLocationChange = (coordinates, details) => {
       <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row gap-6">
           <div className="w-full md:w-1/4">
-            <MembershipContent membership={membership}>
-            </MembershipContent>
+            <MembershipContent membership={membership}></MembershipContent>
 
             <div className="bg-gray-700 text-white p-6">
               <div className="flex justify-between items-center mb-6">
