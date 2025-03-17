@@ -18,7 +18,13 @@
   },
   "scripts": {
     "start": "react-scripts start",
+    "start:local": "env-cmd -f .env.local react-scripts start",
+    "start:dev": "env-cmd -f .env.development react-scripts start",
+    "start:uat": "env-cmd -f .env.uat react-scripts start",
     "build": "react-scripts build && node simple-inline.js",
+    "build:dev": "env-cmd -f .env.development react-scripts build && node simple-inline.js",
+    "build:uat": "env-cmd -f .env.uat react-scripts build && node simple-inline.js",
+    "build:prod": "env-cmd -f .env.production react-scripts build && node simple-inline.js",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -43,6 +49,7 @@
   "devDependencies": {
     "autoprefixer": "^10.4.16",
     "customize-cra": "^1.0.0",
+    "env-cmd": "^10.1.0",
     "html-inline": "^1.2.0",
     "html-inline-css-webpack-plugin": "^1.11.2",
     "html-inline-script-webpack-plugin": "^3.2.1",

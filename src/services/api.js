@@ -3,17 +3,17 @@ import axios from "axios";
 import { formatDate, formatCurrency } from "../utils/formatters";
 import { getCoordinatesByName } from "./geocoding";
 import { contracts as mockContracts } from "../data/mockData";
+import { getAuthToken } from "./api-auth";
+import { API_URL, API_KEY, ENV } from "../config/env";
 
-// Define la URL base para todas las peticiones API
-const API_BASE_URL =
-  "https://8s3qysgi68.execute-api.us-east-1.amazonaws.com/dev/api/web";
+// Define la URL base para todas las peticiones API usando la variable de entorno
+const API_BASE_URL = API_URL;
 
-// API Key para las cabeceras
-const API_KEY = "CCLN5tQXou8tAM92RndP21uhir68aLyL7tpIUmWx";
-
-// Token JWT
-const JWT_TOKEN =
-  "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJtZW1iZXJJZCI6ImMwNmVjNzI2LTE1ZDMtNGNlNS1iODA4LTEwYTY1OGRjOTg5YiIsImxvZ2luRW1haWwiOiJzYW1hbmV6QGdtYWlsLmNvbSIsIm9yaWdlbiI6IndpeC1wcm8tcGluY2giLCJmaXJzdE5hbWUiOiJSb21tZWwiLCJsYXN0TmFtZSI6IlNhbWFuZXoiLCJzdXNjcmlwdGlvbnMiOltdLCJpYXQiOjE3MzM1Nzg2MjYsImV4cCI6MTc2NDY4MjYyNn0.EDfwySVMjVAz9ZgkaDVxkPh2W0W5F-N_1Y0puB3A7Zb9DKIuMI9yTnhA2y4ZWb7Y9fVyV-IGN-KyjGy9JO90ja5L6uPSRvA9TRJS-5_HiIF8tN5nYJJHiWjSsqeRL6IVCPbvrBHBql5AI9I1k8ywIO_9_3cSSi-1sFdmWnOhit4qoJRKgwsTb3wrGbSB1clGX_K4NnyHdyrVh0s4UBld21TJDFogW4ibFBHm0zj7S3MEQ9dVVcygL0X0nONiZNufRICoyj4jZIOLlfl1pk4Y_mKwSyoRJ7D4z2ZN3Uz3xGP1aEVUUHDWuhq_ECTP9HmibDvQ-xJL2X_ZiimxD1As9w";
+// Mostrar información en consola sobre el ambiente configurado (solo en desarrollo)
+if (ENV !== 'prod') {
+  console.log(`API configurada para ambiente: ${ENV}`);
+  console.log(`API URL: ${API_BASE_URL}`);
+}
 
 // Crear una instancia de axios con la configuración base
 const apiClient = axios.create({
@@ -21,15 +21,40 @@ const apiClient = axios.create({
   headers: {
     "Content-Type": "application/json",
     "x-api-key": API_KEY,
-    Authorization: `Bearer ${JWT_TOKEN}`,
   },
 });
+
+// Interceptor para añadir el token a cada petición
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = getAuthToken();
+    if (token) {
+      // Formato correcto para el token JWT
+      config.headers.Authorization = `Bearer ${token}`;
+      
+      // Solo para depuración - remover en producción
+      if (ENV !== 'prod') {
+        console.log("Enviando solicitud autenticada a:", config.url);
+        console.log("Token incluido:", token.substring(0, 15) + "...");
+      }
+    } else {
+      console.warn("No hay token disponible para la solicitud a:", config.url);
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 // Interceptor para manejar respuestas
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error("Error en API:", error);
+    // No mostrar errores detallados en producción
+    if (ENV === 'prod') {
+      console.error("Error en API");
+    } else {
+      console.error("Error en API:", error);
+    }
     return Promise.reject(error);
   }
 );
@@ -91,6 +116,17 @@ const formatFilters = (filters) => {
 
       params.startDate = startOfWeek.toISOString().split("T")[0];
       params.endDate = endOfWeek.toISOString().split("T")[0];
+    } else if (filters.date === "Next Week") {
+      // Calcular inicio y fin de la próxima semana
+      const nextWeek = new Date(now);
+      nextWeek.setDate(now.getDate() + 7);
+      const startOfNextWeek = new Date(nextWeek);
+      startOfNextWeek.setDate(nextWeek.getDate() - nextWeek.getDay());
+      const endOfNextWeek = new Date(startOfNextWeek);
+      endOfNextWeek.setDate(startOfNextWeek.getDate() + 6);
+
+      params.startDate = startOfNextWeek.toISOString().split("T")[0];
+      params.endDate = endOfNextWeek.toISOString().split("T")[0];
     } else if (filters.date === "This Month") {
       // Calcular inicio y fin de mes
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -98,8 +134,23 @@ const formatFilters = (filters) => {
 
       params.startDate = startOfMonth.toISOString().split("T")[0];
       params.endDate = endOfMonth.toISOString().split("T")[0];
+    } else if (filters.date === "Next Month") {
+      // Calcular inicio y fin del próximo mes
+      const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      const endOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0);
+
+      params.startDate = startOfNextMonth.toISOString().split("T")[0];
+      params.endDate = endOfNextMonth.toISOString().split("T")[0];
     }
-    // Para 'This Year' ya tenemos los valores predeterminados
+    // Para otros periodos usamos los valores por defecto
+  }
+
+  // Usar fechas específicas si están incluidas en los filtros
+  if (filters.startDate) {
+    params.startDate = filters.startDate;
+  }
+  if (filters.endDate) {
+    params.endDate = filters.endDate;
   }
 
   // Manejar tipos de propiedad
@@ -131,8 +182,6 @@ const formatFilters = (filters) => {
 
 // Función para formatear los datos de contrato recibidos de la API
 const formatContractData = (apiContract) => {
-  // Agregar console logs para depuración y ver qué viene de la API
-
   // Crear contrato con valores por defecto según la estructura proporcionada
   const contract = {
     id: apiContract._id || apiContract.number || "CO325678",
@@ -151,8 +200,6 @@ const formatContractData = (apiContract) => {
     // Añadir información del limpiador asignado
     winCleaner: apiContract.winCleaner || null,
   };
-
-  // Registrar el contrato formateado para depuración
 
   return contract;
 };
@@ -216,22 +263,34 @@ export const contractService = {
   // Obtener contratos con filtros
   getFilteredContracts: async (filters) => {
     try {
+      // Verificar autenticación primero
+      const token = getAuthToken();
+      if (!token && ENV !== 'prod') {
+        console.warn("Sin token de autenticación. Usando datos de ejemplo para desarrollo.");
+        return mockContracts.map(formatContractData);
+      }
+      
       const params = formatFilters(filters);
-
       const response = await apiClient.get("/contracts", { params });
-
+  
       // Extraer los contratos de la respuesta y formatearlos
       const contractsData = extractContractsFromResponse(response);
-
+  
       if (contractsData.length === 0) {
         return mockContracts.map(formatContractData);
       }
-
+  
       const formattedContracts = contractsData.map(formatContractData);
-
       return formattedContracts;
     } catch (error) {
-      console.error("Error al filtrar contratos:", error);
+      // Si es un error 401, probablemente el token es inválido
+      if (error.response && error.response.status === 401) {
+        console.error("Error de autenticación (401). Posible token inválido o expirado.");
+      } else {
+        console.error("Error al filtrar contratos:", error);
+      }
+      
+      // Devolver datos de ejemplo para continuar con el desarrollo
       return mockContracts.map(formatContractData);
     }
   },
@@ -332,45 +391,28 @@ export const applicationService = {
 
 // Servicio para autenticación
 export const authService = {
-  // Iniciar sesión
-  login: async (credentials) => {
-    try {
-      // Simular una respuesta exitosa con el token proporcionado
-      return {
-        token: JWT_TOKEN,
-        user: {
-          id: "c06ec726-15d3-4ce5-b808-10a658dc989b",
-          email: "samanez@gmail.com",
-          firstName: "Rommel",
-          lastName: "Samanez",
-          membershipType: "elite",
-        },
-      };
-    } catch (error) {
-      console.error("Error al iniciar sesión:", error);
-      throw error;
-    }
-  },
-
-  // Cerrar sesión
-  logout: () => {
-    // En producción, aquí limpiarías el token de localStorage
-  },
-
   // Verificar si el usuario está autenticado
   isAuthenticated: () => {
-    return true;
+    const token = getAuthToken();
+    return !!token && token.length > 10;
   },
 
-  // Obtener información del usuario
-  getUserInfo: () => {
-    return {
-      id: "c06ec726-15d3-4ce5-b808-10a658dc989b",
-      email: "samanez@gmail.com",
-      firstName: "Rommel",
-      lastName: "Samanez",
-      membershipType: "elite",
-    };
+  // Obtener información del usuario a partir del token actual
+  getUserInfo: async () => {
+    try {
+      const response = await apiClient.get("/profile");
+      return response.data.data;
+    } catch (error) {
+      console.error("Error al obtener información del usuario:", error);
+      // Devolver información de perfil simulada
+      return {
+        id: "user-id",
+        email: "usuario@ejemplo.com",
+        firstName: "Usuario",
+        lastName: "Ejemplo",
+        membershipType: "max"
+      };
+    }
   },
 };
 
