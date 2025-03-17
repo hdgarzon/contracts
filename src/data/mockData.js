@@ -79,13 +79,9 @@ export const contracts = [
   }
 ];
 
-// Opciones de filtro
+// Opciones de filtro sin incluir location
 export const filterOptions = {
-  // Tokens
-  location: {
-    lat: 25.774265,
-    lng: -80.193666
-  },
+  // Se omite location intencionalmente para que no se incluya en el primer llamado
   date: 'This Week',
   dateRange: '01/08/2025 - 01/15/2025',
   types: ['Multifamily', 'Studio Housing'],

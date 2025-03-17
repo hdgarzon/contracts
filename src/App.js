@@ -13,6 +13,15 @@ import MembershipContent from "./components/MembershipContent";
 import { USE_FIXED_TOKEN } from "./config/env";
 
 const CleaningApp = () => {
+  // Opciones de filtro iniciales - sin incluir location
+  const initialFilterOptions = {
+    date: 'This Week',
+    dateRange: '01/08/2025 - 01/15/2025',
+    types: ['Multifamily', 'Studio Housing'],
+    bids: ['With bids', 'Without Bids']
+    // No incluir location aquí para que el primer llamado no lo tenga
+  };
+
   const [view, setView] = useState("list");
   const [membership, setMembership] = useState("max");
   const [selectedContract, setSelectedContract] = useState(null);
@@ -30,7 +39,7 @@ const CleaningApp = () => {
     updateFilter,
     clearFilters,
     applyFilters,
-  } = useContracts(filterOptions);
+  } = useContracts(initialFilterOptions);
 
   // Listener para mensajes de Wix
   useEffect(() => {
@@ -150,13 +159,15 @@ const CleaningApp = () => {
     updateFilter("bids", newBids);
   };
 
+  // Manejador específico para location
   const handleLocationChange = (coordinates, details) => {
+    // Solo actualizar location cuando el usuario selecciona explícitamente una ubicación
     updateFilter("location", coordinates);
     updateFilter("displayLocation", details.displayName);
   };
 
   const clearAllFilters = () => {
-    clearFilters(filterOptions);
+    clearFilters(initialFilterOptions);
   };
 
   const handleContractSelect = (contract) => {

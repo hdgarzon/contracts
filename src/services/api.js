@@ -63,11 +63,10 @@ apiClient.interceptors.response.use(
 const formatFilters = (filters) => {
   if (!filters) return {};
 
-  // Valores predeterminados exactamente como espera la API
+  // Valores predeterminados exactamente como espera la API, pero sin location
   const defaultParams = {
     page: "1",
     per_page: "20",
-    location: "-82.5513709,27.4974141", // Coordenadas estándar para Bradenton, FL
     startDate: "2025-01-01",
     endDate: "2025-12-10",
     bids: "True",
@@ -77,7 +76,7 @@ const formatFilters = (filters) => {
   // Comenzar con los parámetros predeterminados
   const params = { ...defaultParams };
 
-  // Actualizar location basado en los filtros proporcionados
+  // Añadir location solo si está presente en los filtros
   if (filters.location) {
     // Si es coordenadas en formato "lng,lat"
     if (
@@ -99,7 +98,10 @@ const formatFilters = (filters) => {
     else if (typeof filters.location === "string") {
       // Intentamos obtener coordenadas del nombre desde nuestro servicio
       const coordinates = getCoordinatesByName(filters.location);
-      params.location = coordinates || "-82.5513709,27.4974141"; // Default a Bradenton, FL
+      if (coordinates) {
+        params.location = coordinates;
+      }
+      // Si no podemos obtener coordenadas, no añadimos el parámetro location
     }
   }
 
@@ -176,6 +178,9 @@ const formatFilters = (filters) => {
       params.bids = "False";
     }
   }
+
+  // Imprimir los parámetros que se utilizarán para depuración
+  console.log("Parámetros API:", params);
 
   return params;
 };

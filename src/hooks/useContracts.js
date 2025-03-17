@@ -1,17 +1,33 @@
+// src/hooks/useContracts.js
 import { useState, useEffect, useCallback } from 'react';
 import { contractService } from '../services/api';
 import { contracts as mockContracts } from '../data/mockData';
 
 export const useContracts = (initialFilters = {}) => {
+  // Omitir location del filtro inicial
+  const initialFiltersWithoutLocation = { ...initialFilters };
+  delete initialFiltersWithoutLocation.location;
+  
   const [contracts, setContracts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filters, setFilters] = useState(initialFilters);
+  const [filters, setFilters] = useState(initialFiltersWithoutLocation);
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
 
   const fetchContracts = useCallback(async (currentFilters = filters) => {
     setLoading(true);
     try {
-      const result = await contractService.getFilteredContracts(currentFilters);
+      // Si es la primera carga, asegurarse de que no se envía el parámetro location
+      const filtersToUse = isFirstLoad 
+        ? { ...currentFilters }
+        : currentFilters;
+        
+      if (isFirstLoad) {
+        delete filtersToUse.location;
+        setIsFirstLoad(false);
+      }
+      
+      const result = await contractService.getFilteredContracts(filtersToUse);
       
       if (!result || !Array.isArray(result)) {
         setContracts([]);
@@ -27,7 +43,7 @@ export const useContracts = (initialFilters = {}) => {
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters, isFirstLoad]);
 
   // Cargar contratos cuando cambian los filtros
   useEffect(() => {
@@ -46,7 +62,10 @@ export const useContracts = (initialFilters = {}) => {
 
   // Función para limpiar todos los filtros
   const clearFilters = useCallback((defaultFilters = {}) => {
-    setFilters(defaultFilters);
+    // Asegurar que location no se incluye en los filtros por defecto
+    const defaultWithoutLocation = { ...defaultFilters };
+    delete defaultWithoutLocation.location;
+    setFilters(defaultWithoutLocation);
   }, []);
 
   // Función para aplicar los filtros actuales manualmente
