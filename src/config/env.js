@@ -16,7 +16,7 @@ let RUNTIME_TOKEN = null;
 const baseConfig = {
   API_URL: process.env.REACT_APP_API_URL || 'https://8s3qysgi68.execute-api.us-east-1.amazonaws.com/dev/api/web',
   API_KEY: process.env.REACT_APP_API_KEY || 'CCLN5tQXou8tAM92RndP21uhir68aLyL7tpIUmWx',
-  GOOGLE_MAPS_API_KEY: process.env.REACT_APP_GOOGLE_MAPS_API_KEY || 'tu_clave_de_google_maps_api',
+  GOOGLE_MAPS_API_KEY: process.env.REACT_APP_GOOGLE_MAPS_API_KEY || 'AIzaSyD8y8PTeAJPEa3ImFdYVp0vJ4f7_y-nZeE',
   APP_ID: process.env.REACT_APP_APP_ID || 'pinch-contracts-app', // Debe coincidir con CALLER_ID en Wix
   USE_FIXED_TOKEN: ENV === 'dev' // Usar token fijo solo en ambiente de desarrollo
 };

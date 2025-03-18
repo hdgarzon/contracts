@@ -14,7 +14,8 @@ const MembershipContent = ({ membership = 'max', children }) => {
   }, [membership]);
   
   return (
-    <div className="membership-container bg-gray-500 p-10 mb-6">
+    <div className="membership-container bg-gray-500 p-4 sm:p-6 md:p-10 mb-6 overflow-hidden">
+      <div className="flex justify-center w-full">
       {currentMembership === 'elite' && (
         <svg className="mx-auto block" width="129" height="55" viewBox="0 0 129 55" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M52.582 3.96338H20.0058L18.5598 5.56919H53.9939L52.582 3.96338Z" fill="#241D5D"/>
@@ -72,6 +73,7 @@ const MembershipContent = ({ membership = 'max', children }) => {
       
       {children}
     </div>
+  </div>
   );
 };
 

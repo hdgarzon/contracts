@@ -51,6 +51,9 @@ const CleaningApp = () => {
     return validMemberships.includes(membershipType.toLowerCase());
   };
 
+  // Verificar si debemos mostrar el mensaje de actualización (solo para max y elite)
+  const shouldShowUpgradeMessage = membership && membership.toLowerCase() !== 'quickpay';
+
 // En tu useEffect de comunicación con Wix
 useEffect(() => {
   console.log("Inicializando comunicación con Wix...");
@@ -412,12 +415,15 @@ useEffect(() => {
                 <span className="font-semibold"> Max</span> members.
               </p>
 
-              <div className="bg-gray-500 p-4 ">
-                <button className="text-blue-500 font-medium">
-                  Upgrade Your Membership now
-                </button>{" "}
-                to unlock priority access and secure more opportunities!
-              </div>
+              {/* Mostrar el mensaje de actualización solo si NO es miembro quickpay */}
+              {shouldShowUpgradeMessage && (
+                <div className="bg-gray-500 p-4">
+                  <button className="text-blue-500 font-medium">
+                    Upgrade Your Membership now
+                  </button>{" "}
+                  to unlock priority access and secure more opportunities!
+                </div>
+              )}
             </div>
 
             {error && (
