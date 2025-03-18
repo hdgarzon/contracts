@@ -221,19 +221,23 @@ useEffect(() => {
 
   const handleSubmitApplication = async (formData) => {
     setIsLoading(true);
-
+  
     try {
       const response = await applicationService.submitApplication(
         selectedContract.id,
         formData
       );
-
+  
       setShowApplicationModal(false);
       setView("confirmation");
     } catch (error) {
-      alert(
-        "Hubo un error al enviar tu aplicación. Por favor, intenta de nuevo."
-      );
+      // Verifica si es el error "Bidder already exists"
+      if (error.response && error.response.status === 400 && 
+          error.response.data && error.response.data.message === "Bidder already exists") {
+        alert("Ya has aplicado a este contrato anteriormente.");
+      } else {
+        alert("Hubo un error al enviar tu aplicación. Por favor, intenta de nuevo.");
+      }
     } finally {
       setIsLoading(false);
     }

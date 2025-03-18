@@ -194,9 +194,9 @@ const formatFilters = (filters) => {
 
 // Función para formatear los datos de contrato recibidos de la API
 const formatContractData = (apiContract) => {
-  // Crear contrato con valores por defecto según la estructura proporcionada
+  // Crear contrato con valores predeterminados según la estructura proporcionada
   const contract = {
-    id: apiContract._id || apiContract.number || "CO325678",
+    id: apiContract.number || apiContract._id || "CO325678",
     status: apiContract.status || "published",
     type: apiContract.type || "Multifamily",
     name: apiContract.services || "Turn Over",
@@ -206,12 +206,17 @@ const formatContractData = (apiContract) => {
     value: apiContract.anualEstimation?.clientPrice
       ? formatCurrency(apiContract.anualEstimation.clientPrice)
       : "0",
-    unitCount: apiContract.unitCount || 10,
+    // Asegurarse de usar la propiedad correcta de unitCount de la respuesta de la API
+    unitCount: apiContract.units || apiContract.unitCount,
     bidders: apiContract.bidders || 5,
     scopeOfWork: apiContract.scopeOfWork || "No scope of work provided",
-    // Añadir información del limpiador asignado
+    // Añadir información sobre el limpiador asignado
     winCleaner: apiContract.winCleaner || null,
   };
+
+  // Verificar cada propiedad en caso de que se necesite mapeo adicional
+  console.log("Datos del contrato de la API:", apiContract);
+  console.log("Contrato formateado:", contract);
 
   return contract;
 };
@@ -378,22 +383,19 @@ export const applicationService = {
           },
         },
       };
-
+  
       // Hacer la llamada a la API para enviar la aplicación
       const response = await apiClient.put(
         `/contracts/${contractId}`,
         apiData
       );
-
+  
       return response.data;
     } catch (error) {
       console.error("Error al enviar aplicación:", error);
-
-      // Devolver una respuesta simulada exitosa por ahora
-      return {
-        success: true,
-        message: "Aplicación enviada exitosamente",
-      };
+      
+      // Lanzar el error para que pueda ser capturado por la función que lo llama
+      throw error;
     }
   },
 
