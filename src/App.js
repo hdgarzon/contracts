@@ -24,7 +24,7 @@ const CleaningApp = () => {
   };
 
   const [view, setView] = useState("list");
-  const [membership, setMembership] = useState("quickpay");
+  const [membership, setMembership] = useState("max");
   const [selectedContract, setSelectedContract] = useState(null);
   const [showLoginModal, setShowLoginModal] = useState(true);
   const [showApplicationModal, setShowApplicationModal] = useState(false);
@@ -47,6 +47,7 @@ const CleaningApp = () => {
 
   // Verificar si la membresía es válida (Max, Elite o QuickPay)
   const isValidMembership = (membershipType) => {
+    if (!membershipType) return false;
     const validMemberships = ['max', 'elite', 'quickpay'];
     return validMemberships.includes(membershipType.toLowerCase());
   };
@@ -64,12 +65,14 @@ useEffect(() => {
   if (USE_FIXED_TOKEN) {
     setAuthToken(); // Llamar sin parámetros establecerá el token fijo
     setTokenReady(true);
-    // No cerrar el modal de login automáticamente, verificar la membresía primero
+    
+    // Verificar si la membresía es válida para cerrar el modal de login
     if (isValidMembership(membership)) {
       setShowLoginModal(false);
     } else {
       setShowLoginModal(true);
     }
+    
     console.log("Usando token fijo para desarrollo, no se espera comunicación con Wix");
     return;
   }
@@ -104,11 +107,11 @@ useEffect(() => {
             setShowLoginModal(true);
           }
         } else {
-          // Si no hay tipo de membresía, mantener el modal abierto
+          // Si no hay tipo de membresía, mostrar el modal
           setShowLoginModal(true);
         }
       } else {
-        // Si no hay perfil de usuario, mantener el modal abierto
+        // Si no hay perfil de usuario, mostrar el modal
         setShowLoginModal(true);
       }
     }
