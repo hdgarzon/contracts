@@ -94,9 +94,25 @@ export const contracts = [
 export const filterOptions = {
   // Se omite location intencionalmente para que no se incluya en el primer llamado
   date: 'This Week',
-  dateRange: '01/08/2025 - 01/15/2025',
+  dateRange: (() => {
+    const today = new Date();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay()); // Set to Sunday
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 7); // Set to Saturday
+
+    const formatDate = (date) => {
+      return date.toLocaleDateString('en-US', {
+        month: '2-digit',
+        day: '2-digit',
+        year: 'numeric'
+      });
+    };
+
+    return `${formatDate(startOfWeek)} - ${formatDate(endOfWeek)}`;
+  })(),
   types: ['Multifamily', 'Studio Housing'],
-  bids: ['With bids', 'Without Bids']
+  bids: ['With Applicants', 'Without Applicants']
 };
 
 // Tipos de membresía

@@ -17,9 +17,25 @@ const CleaningApp = () => {
   // Opciones de filtro iniciales - sin incluir location
   const initialFilterOptions = {
     date: "This Week",
-    dateRange: "01/08/2025 - 01/15/2025",
+    dateRange: (() => {
+      const today = new Date();
+      const startOfWeek = new Date(today);
+      startOfWeek.setDate(today.getDate() - today.getDay()); // Set to Sunday
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 7); // Set to Saturday
+  
+      const formatDate = (date) => {
+        return date.toLocaleDateString('en-US', {
+          month: '2-digit',
+          day: '2-digit',
+          year: 'numeric'
+        });
+      };
+  
+      return `${formatDate(startOfWeek)} - ${formatDate(endOfWeek)}`;
+    })(),
     types: ["Multifamily", "Studio Housing"],
-    bids: ["Without Bids"],
+    bids: ["Without Applicants"],
     // No incluir location aquí para que el primer llamado no lo tenga
   };
 
@@ -387,7 +403,7 @@ const CleaningApp = () => {
               </div>
               <div className="border-b border-gray-400 mb-6 mt-6"></div>
               <div className="mb-6">
-                <h3 className="mb-2">Bids</h3>
+                <h3 className="mb-2">Applicants</h3>
                 <div className="space-y-2">
                   {filterOptions.bids.map((bid) => (
                     <div key={bid} className="flex items-center">
@@ -483,6 +499,7 @@ const CleaningApp = () => {
       {showLoginModal && <LoginModal onClose={closeLoginModal} />}
       {showApplicationModal && (
         <ApplicationModal
+          membership={userProfile?.membershipType?.toLowerCase() || 'max'} // Usar el tipo de membresía de Wix, con 'max' como valor predeterminado
           onSubmit={handleSubmitApplication}
           onClose={() => setShowApplicationModal(false)}
         />
