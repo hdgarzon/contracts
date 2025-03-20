@@ -1,12 +1,23 @@
-// Datos de ejemplo para la aplicación
+// Estos datos SOLO deben utilizarse en desarrollo y para pruebas,
+// nunca como fallback en producción
 
-// Contratos de ejemplo MÁS DETALLADOS para asegurar la visualización
+import { ENV } from '../config/env';
+
+// Verificar si estamos en modo desarrollo (dev o local)
+export const isDevMode = ['dev', 'local'].includes(ENV);
+
+// Advertencia si se intenta importar en producción
+if (!isDevMode) {
+  console.warn('ADVERTENCIA: mockData.js se está importando en un entorno no-desarrollo. Esto no debería ocurrir.');
+}
+
+// Contratos de ejemplo para desarrollo y pruebas
 export const contracts = [
   {
     id: 'CO325678',
     status: 'published',
     type: 'Multifamily',
-    name: 'Turn Over',
+    name: 'Turn Over / Common Area',
     location: 'Tampa, FL',
     startDate: 'Thur, 01/08/2025',
     jobsPerMonth: 4,
@@ -19,7 +30,7 @@ export const contracts = [
     id: 'CO425679',
     status: 'Active',
     type: 'Studio Housing',
-    name: 'Turn Over',
+    name: 'Turn Over / Common Area',
     location: 'Miami, FL',
     startDate: 'Thur, 01/10/2025',
     jobsPerMonth: 6,
@@ -32,7 +43,7 @@ export const contracts = [
     id: 'CO525680',
     status: 'Active',
     type: 'Multifamily',
-    name: 'Turn Over',
+    name: 'Turn Over / Common Area',
     location: 'Orlando, FL',
     startDate: 'Thur, 01/12/2025',
     jobsPerMonth: 5,
@@ -44,7 +55,7 @@ export const contracts = [
   {
     id: 'CO625681',
     type: 'Studio Housing',
-    name: 'Turn Over',
+    name: 'Turn Over / Common Area',
     location: 'Jacksonville, FL',
     startDate: 'Thur, 01/15/2025',
     jobsPerMonth: 3,
@@ -56,7 +67,7 @@ export const contracts = [
   {
     id: 'CO725682',
     type: 'Multifamily',
-    name: 'Turn Over',
+    name: 'Turn Over / Common Area',
     location: 'St. Petersburg, FL',
     startDate: 'Thur, 01/20/2025',
     jobsPerMonth: 7,
@@ -68,7 +79,7 @@ export const contracts = [
   {
     id: 'CO825683',
     type: 'Studio Housing',
-    name: 'Turn Over',
+    name: 'Turn Over / Common Area',
     location: 'Clearwater, FL',
     startDate: 'Thur, 01/25/2025',
     jobsPerMonth: 4,
@@ -93,4 +104,31 @@ export const membershipTypes = {
   QUICK_PAY: 'quickpay',
   ELITE: 'elite',
   MAX: 'max'
+};
+
+// Función para obtener datos de prueba solo si estamos en desarrollo
+export const getMockData = (dataType) => {
+  if (!isDevMode) {
+    console.warn('Intentando acceder a datos mock en producción');
+    return null;
+  }
+  
+  switch (dataType) {
+    case 'contracts':
+      return [...contracts];
+    case 'filterOptions':
+      return {...filterOptions};
+    case 'membershipTypes':
+      return {...membershipTypes};
+    default:
+      return null;
+  }
+};
+
+export default {
+  isDevMode,
+  getMockData,
+  contracts,
+  filterOptions,
+  membershipTypes
 };

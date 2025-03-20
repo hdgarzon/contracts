@@ -48,90 +48,97 @@ const CleaningApp = () => {
   // Verificar si la membresía es válida (Max, Elite o QuickPay)
   const isValidMembership = (membershipType) => {
     if (!membershipType) return false;
-    const validMemberships = ['max', 'elite', 'quickpay'];
+    const validMemberships = ["max", "elite", "quickpay"];
     return validMemberships.includes(membershipType.toLowerCase());
   };
 
   // Verificar si debemos mostrar el mensaje de actualización (solo para max y elite)
-  const shouldShowUpgradeMessage = membership && membership.toLowerCase() !== 'quickpay';
+  const shouldShowUpgradeMessage =
+    membership && membership.toLowerCase() !== "quickpay";
 
-// En tu useEffect de comunicación con Wix
-useEffect(() => {
-  console.log("Inicializando comunicación con Wix...");
-  
-  let communicationTimeout;
-  
-  // Si estamos usando token fijo, no necesitamos esperar mensajes de Wix
-  if (USE_FIXED_TOKEN) {
-    setAuthToken(); // Llamar sin parámetros establecerá el token fijo
-    setTokenReady(true);
-    
-    // Verificar si la membresía es válida para cerrar el modal de login
-    if (isValidMembership(membership)) {
-      setShowLoginModal(false);
-    } else {
-      setShowLoginModal(true);
-    }
-    
-    console.log("Usando token fijo para desarrollo, no se espera comunicación con Wix");
-    return;
-  }
-  
-  // Inicializar el servicio de token de Wix
-  WixTokenService.initialize(({ token, userProfile, error: tokenError }) => {
-    if (tokenError) {
-      setCommunicationError("Hubo un problema al comunicarse con Wix. Por favor, intenta recargar la página.");
+  // En tu useEffect de comunicación con Wix
+  useEffect(() => {
+    console.log("Inicializando comunicación con Wix...");
+
+    let communicationTimeout;
+
+    // Si estamos usando token fijo, no necesitamos esperar mensajes de Wix
+    if (USE_FIXED_TOKEN) {
+      setAuthToken(); // Llamar sin parámetros establecerá el token fijo
+      setTokenReady(true);
+
+      // Verificar si la membresía es válida para cerrar el modal de login
+      if (isValidMembership(membership)) {
+        setShowLoginModal(false);
+      } else {
+        setShowLoginModal(true);
+      }
+
+      console.log(
+        "Usando token fijo para desarrollo, no se espera comunicación con Wix"
+      );
       return;
     }
-    
-    console.log("Token recibido desde Wix", token ? "✓" : "✗");
-    
-    if (token) {
-      setTokenReady(true);
-      
-      // Si el userProfile existe, actualizar el estado
-      if (userProfile) {
-        console.log("Perfil de usuario recibido:", userProfile);
-        setUserProfile(userProfile);
-        
-        // Establecer el tipo de membresía basado en el perfil
-        if (userProfile.membershipType) {
-          console.log("Tipo de membresía:", userProfile.membershipType);
-          const membershipType = userProfile.membershipType.toLowerCase();
-          setMembership(membershipType);
-          
-          // Verificar si la membresía es válida para cerrar el modal de login
-          if (isValidMembership(membershipType)) {
-            setShowLoginModal(false);
+
+    // Inicializar el servicio de token de Wix
+    WixTokenService.initialize(({ token, userProfile, error: tokenError }) => {
+      if (tokenError) {
+        setCommunicationError(
+          "Hubo un problema al comunicarse con Wix. Por favor, intenta recargar la página."
+        );
+        return;
+      }
+
+      console.log("Token recibido desde Wix", token ? "✓" : "✗");
+
+      if (token) {
+        setTokenReady(true);
+
+        // Si el userProfile existe, actualizar el estado
+        if (userProfile) {
+          console.log("Perfil de usuario recibido:", userProfile);
+          setUserProfile(userProfile);
+
+          // Establecer el tipo de membresía basado en el perfil
+          if (userProfile.membershipType) {
+            console.log("Tipo de membresía:", userProfile.membershipType);
+            const membershipType = userProfile.membershipType.toLowerCase();
+            setMembership(membershipType);
+
+            // Verificar si la membresía es válida para cerrar el modal de login
+            if (isValidMembership(membershipType)) {
+              setShowLoginModal(false);
+            } else {
+              setShowLoginModal(true);
+            }
           } else {
+            // Si no hay tipo de membresía, mostrar el modal
             setShowLoginModal(true);
           }
         } else {
-          // Si no hay tipo de membresía, mostrar el modal
+          // Si no hay perfil de usuario, mostrar el modal
           setShowLoginModal(true);
         }
-      } else {
-        // Si no hay perfil de usuario, mostrar el modal
-        setShowLoginModal(true);
       }
-    }
-  });
-  
-  // Timer para mostrar mensaje al usuario si no se recibe respuesta de Wix
-  communicationTimeout = setTimeout(() => {
-    if (!tokenReady && !communicationError) {
-      setCommunicationError("No se pudo establecer comunicación con Wix. Por favor, recarga la página.");
-    }
-  }, 15000);
-  
-  // Limpiar el listener y timer al desmontar
-  return () => {
-    WixTokenService.cleanup();
-    if (communicationTimeout) {
-      clearTimeout(communicationTimeout);
-    }
-  };
-}, [tokenReady, communicationError, membership]);
+    });
+
+    // Timer para mostrar mensaje al usuario si no se recibe respuesta de Wix
+    communicationTimeout = setTimeout(() => {
+      if (!tokenReady && !communicationError) {
+        setCommunicationError(
+          "No se pudo establecer comunicación con Wix. Por favor, recarga la página."
+        );
+      }
+    }, 15000);
+
+    // Limpiar el listener y timer al desmontar
+    return () => {
+      WixTokenService.cleanup();
+      if (communicationTimeout) {
+        clearTimeout(communicationTimeout);
+      }
+    };
+  }, [tokenReady, communicationError, membership]);
 
   const updateDateRange = (dateOption) => {
     const now = new Date();
@@ -227,22 +234,28 @@ useEffect(() => {
 
   const handleSubmitApplication = async (formData) => {
     setIsLoading(true);
-  
+
     try {
       const response = await applicationService.submitApplication(
         selectedContract.id,
         formData
       );
-  
+
       setShowApplicationModal(false);
       setView("confirmation");
     } catch (error) {
       // Verifica si es el error "Bidder already exists"
-      if (error.response && error.response.status === 400 && 
-          error.response.data && error.response.data.message === "Bidder already exists") {
+      if (
+        error.response &&
+        error.response.status === 400 &&
+        error.response.data &&
+        error.response.data.message === "Bidder already exists"
+      ) {
         alert("Ya has aplicado a este contrato anteriormente.");
       } else {
-        alert("Hubo un error al enviar tu aplicación. Por favor, intenta de nuevo.");
+        alert(
+          "Hubo un error al enviar tu aplicación. Por favor, intenta de nuevo."
+        );
       }
     } finally {
       setIsLoading(false);
@@ -405,22 +418,22 @@ useEffect(() => {
 
           <div className="w-full md:w-3/4">
             <div className="mb-6">
-              <h2 className="text-xl font-semibold mb-2">
+              <span className="text-xl font-semibold mb-2 pr-2">
                 Welcome to the Opportunities Board!
-              </h2>
-              <p className="mb-4 font-light text-base">
+              </span>
+              <span className="mb-4 font-light text-base text.black-900">
                 New cleaning contracts and job opportunities are posted here and
                 prioritized for
-                <span className="font-semibold italic"> Quick Pay</span>{" "}
+                <span className="text.black-900 font-normal italic"> Quick Pay</span>{" "}
                 members, followed by
-                <span className="font-semibold italic"> ELITE</span> members,
+                <span className="text.black-900 font-normal italic"> ELITE</span> members,
                 and then
-                <span className="font-semibold"> Max</span> members.
-              </p>
+                <span className="text.black-900 font-normal italic"> Max</span> members.
+              </span>
 
               {/* Mostrar el mensaje de actualización solo si NO es miembro quickpay */}
               {shouldShowUpgradeMessage && (
-                <div className="bg-gray-500 p-4">
+                <div className="bg-gray-500 p-4 my-3">
                   <button className="text-blue-500 font-medium">
                     Upgrade Your Membership now
                   </button>{" "}

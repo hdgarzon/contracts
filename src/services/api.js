@@ -2,7 +2,6 @@
 import axios from "axios";
 import { formatDate, formatCurrency } from "../utils/formatters";
 import { getCoordinatesByName } from "./geocoding";
-import { contracts as mockContracts } from "../data/mockData";
 import { getAuthToken } from "./api-auth";
 import { API_URL, API_KEY, ENV } from "../config/env";
 
@@ -196,27 +195,30 @@ const formatFilters = (filters) => {
 const formatContractData = (apiContract) => {
   // Crear contrato con valores predeterminados según la estructura proporcionada
   const contract = {
-    id: apiContract.number || apiContract._id || "CO325678",
+    id: apiContract.number || apiContract._id || "",
     status: apiContract.status || "published",
-    type: apiContract.type || "Multifamily",
+    type: apiContract.type || "",
     name: apiContract.services || "Turn Over",
-    location: apiContract.location || "Bradenton, FL",
-    startDate: formatDate(apiContract.startDate) || "Thur, 01/08/2025",
-    jobsPerMonth: apiContract.jobsPerMonth || 4,
+    location: apiContract.location || "",
+    startDate: formatDate(apiContract.startDate) || "",
+    jobsPerMonth: apiContract.jobsPerMonth || 0,
     value: apiContract.anualEstimation?.clientPrice
       ? formatCurrency(apiContract.anualEstimation.clientPrice)
       : "0",
     // Asegurarse de usar la propiedad correcta de unitCount de la respuesta de la API
-    unitCount: apiContract.units || apiContract.unitCount,
-    bidders: apiContract.bidders || 5,
-    scopeOfWork: apiContract.scopeOfWork || "No scope of work provided",
+    unitCount: apiContract.units || apiContract.unitCount || 0,
+    // Importante: Usar el valor exacto de la API para bidders, sin valor predeterminado
+    bidders: apiContract.bidders || 0, // Cambiado de 5 a 0
+    scopeOfWork: apiContract.scopeOfWork || "No disponible",
     // Añadir información sobre el limpiador asignado
     winCleaner: apiContract.winCleaner || null,
   };
 
   // Verificar cada propiedad en caso de que se necesite mapeo adicional
-  console.log("Datos del contrato de la API:", apiContract);
-  console.log("Contrato formateado:", contract);
+  if (ENV !== 'prod') {
+    console.log("Datos del contrato de la API:", apiContract);
+    console.log("Contrato formateado:", contract);
+  }
 
   return contract;
 };
@@ -266,10 +268,11 @@ export const contractService = {
       // Extraer los contratos de la respuesta y formatearlos
       const contractsData = extractContractsFromResponse(response);
 
-      // Return empty array if no contracts are found, don't fallback to mockContracts
+      // Return empty array if no contracts are found
       return contractsData.map(formatContractData);
     } catch (error) {
-      // Return empty array instead of mock data
+      console.error("Error al obtener contratos:", error);
+      // Return empty array - no mock data fallback
       return [];
     }
   },
@@ -281,7 +284,7 @@ export const contractService = {
       const token = getAuthToken();
       if (!token && ENV !== 'prod') {
         console.warn("No hay token disponible para getFilteredContracts");
-        // Return empty array instead of mock data
+        // Return empty array
         return [];
       }
       
@@ -344,7 +347,8 @@ export const contractService = {
       // Formatear el contrato recibido
       return formatContractData(contractData);
     } catch (error) {
-      // Don't return mock data here either
+      console.error("Error al obtener contrato por ID:", error);
+      // Don't return mock data here
       return null;
     }
   },

@@ -1,6 +1,6 @@
-// src/hooks/useContracts.js
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { contractService } from '../services/api';
+import { ENV } from '../config/env';
 
 export const useContracts = (initialFilters = {}) => {
   // Omitir location del filtro inicial
@@ -68,8 +68,13 @@ export const useContracts = (initialFilters = {}) => {
       
       setError(null);
     } catch (err) {
-      setError("Failed to load contracts. Please try again later.");
+      setError("No se pudieron cargar los contratos. Por favor, inténtelo más tarde.");
       setContracts([]);
+      
+      // Usar console.error solo en ambientes non-prod
+      if (ENV !== 'prod') {
+        console.error("Error al cargar contratos:", err);
+      }
     } finally {
       setLoading(false);
     }

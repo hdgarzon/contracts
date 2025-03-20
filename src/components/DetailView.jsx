@@ -5,14 +5,18 @@ export const DetailView = ({ contract, onBack, onApply }) => {
   // Validar datos y proporcionar valores predeterminados
   const safeContract = {
     id: contract.id || "Unknown ID",
-    name: contract.name || "Turn Over",
-    location: contract.location || "Tampa, Florida",
-    type: contract.type || "multifamily",
+    name:
+      contract.name === "Turn Over/Common Area"
+        ? "Turn Over / Common Area"
+        : contract.name || "Turn Over",
+    location: contract.location || "",
+    type: contract.type || "",
     unitCount: contract.unitCount || 0,
-    startDate: contract.startDate || "Unknown Date",
+    startDate: contract.startDate || "",
     jobsPerMonth: contract.jobsPerMonth || 0,
     value: contract.value || "0",
-    bidders: contract.bidders || 0,
+    // No usar valor predeterminado para bidders
+    bidders: contract.bidders || 0, // Cambiado de 5 a 0
     scopeOfWork: contract.scopeOfWork || "No scope information available",
   };
 
@@ -23,9 +27,9 @@ export const DetailView = ({ contract, onBack, onApply }) => {
       </button>
       <div className="border rounded p-4 mb-3">
         <div className="flex justify-center mb-6">
-          <div className="flex items-center">
+          <div className="flex flex-col items-center">
             <svg
-              className="w-10 mr-2"
+              className="w-10 my-3"
               width="33"
               height="38"
               viewBox="0 0 33 38"
@@ -36,8 +40,9 @@ export const DetailView = ({ contract, onBack, onApply }) => {
                 fill="#241D5D"
               />
             </svg>
-
-            <h2 className="text-xl font-semibold">Contract Opportunity</h2>
+            <h2 className="text-base font-semibold my-4 text-gray-600">
+              Contract Opportunity
+            </h2>
           </div>
         </div>
 
@@ -87,11 +92,11 @@ export const DetailView = ({ contract, onBack, onApply }) => {
                 <h3 className="text-lg font-semibold text-company">
                   {safeContract.name}
                 </h3>
-                <span className="text-gray-500 px-4 text-sm">
+                <span className="text-company px-4 text-sm">
                   ID: {safeContract.id}
                 </span>
               </div>
-              <div className="flex items-center text-sm text-gray-500 mt-1">
+              <div className="flex items-center text-sm text-gray-600 mt-1">
                 <svg
                   className="mr-2"
                   width="12"
@@ -112,13 +117,13 @@ export const DetailView = ({ contract, onBack, onApply }) => {
                   {safeContract.bidders}{" "}
                 </span>{" "}
                 <span className="text-gray-600 font-light">
-                  bidders right now
+                {safeContract.bidders === 1 || safeContract.bidders === 0 ? "Applicant" : "Applicants"} right now
                 </span>
               </div>
             </div>
             <button
               onClick={onApply}
-              className="bg-blue-500 text-white px-4 py-2 hover:bg-blue-600">
+              className="bg-blue-500 text-white px-10 py-2">
               Apply
             </button>
           </div>
@@ -143,7 +148,9 @@ export const DetailView = ({ contract, onBack, onApply }) => {
                   strokeLinejoin="round"
                 />
               </svg>
-              <span className="font-bold">{safeContract.location}</span>
+              <span className="font-bold text-gray-600">
+                {safeContract.location}
+              </span>
               <svg
                 className="mx-2"
                 width="28"
@@ -163,10 +170,16 @@ export const DetailView = ({ contract, onBack, onApply }) => {
                   fill="#241D5D"
                 />
               </svg>
-              <span className="font-light">Type: </span>{" "}
-              <span className="font-bold px-2"> {safeContract.type}</span>
-              <span className="ml-8">Unit count: </span>{" "}
-              <span className="font-bold px-2"> {safeContract.unitCount}</span>
+              <span className="font-light text-gray-100">Type: </span>{" "}
+              <span className="font-bold px-2 text-gray-600">
+                {" "}
+                {safeContract.type}
+              </span>
+              <span className="ml-8 font-light text-gray-100">Unit count: </span>{" "}
+              <span className="font-bold px-2 text-gray-600">
+                {" "}
+                {safeContract.unitCount}
+              </span>
             </div>
 
             <div className="flex items-center">
@@ -183,8 +196,11 @@ export const DetailView = ({ contract, onBack, onApply }) => {
                   fill="#241D5D"
                 />
               </svg>
-              <span className="font-light">Expected Start Date: </span>{" "}
-              <span className="font-bold px-2"> {safeContract.startDate}</span>
+              <span className="font-light text-gray-100">Expected Start Date: </span>{" "}
+              <span className="font-bold px-2 text-gray-600">
+                {" "}
+                {safeContract.startDate}
+              </span>
             </div>
 
             <div className="flex items-center">
@@ -201,8 +217,8 @@ export const DetailView = ({ contract, onBack, onApply }) => {
                   fill="#241D5D"
                 />
               </svg>
-              <span className="font-light">Estimated # Jobs per month:</span>{" "}
-              <span className="font-bold px-2">
+              <span className="font-light text-gray-100">Estimated # Jobs per month:</span>{" "}
+              <span className="font-bold px-2 text-gray-600">
                 {" "}
                 {safeContract.jobsPerMonth}
               </span>
@@ -229,7 +245,7 @@ export const DetailView = ({ contract, onBack, onApply }) => {
                 />
               </svg>
 
-              <span className="font-light">
+              <span className="font-light text-gray-100">
                 Estimated Annual Contract Value:{" "}
                 <span className="text-green-600 font-bold px-2">
                   USD ${safeContract.value}
@@ -240,13 +256,13 @@ export const DetailView = ({ contract, onBack, onApply }) => {
         </div>
 
         <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-2">Scope of Work</h3>
-          <ul className="list-disc text-gray-600">
+          <h3 className="text-lg font-semibold mb-2 text.black-900">Scope of Work</h3>
+          <span className="list-disc text-gray-600">
             <p>
               {safeContract.scopeOfWork ||
                 "No scope of work information available"}
             </p>
-          </ul>
+          </span>
         </div>
 
         {safeContract.name === "Turn Over/Common Area" && (
