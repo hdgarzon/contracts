@@ -18,8 +18,8 @@ export const DetailView = ({ contract, onBack, onApply }) => {
     // No usar valor predeterminado para bidders
     bidders: contract.bidders || 0, // Cambiado de 5 a 0
     scopeOfWork: contract.scopeOfWork || "No scope information available",
+    number: contract.number || "Unknown",
   };
-
   return (
     <div>
       <button onClick={onBack} className="flex items-center text-blue-500 mb-6">
@@ -93,7 +93,7 @@ export const DetailView = ({ contract, onBack, onApply }) => {
                   {safeContract.name}
                 </h3>
                 <span className="text-company px-4 text-sm">
-                  ID: {safeContract.id}
+                  ID: {safeContract.number}
                 </span>
               </div>
               <div className="flex items-center text-sm text-gray-600 mt-1">

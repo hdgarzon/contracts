@@ -21,7 +21,7 @@ export const ContractCard = ({ contract, onSelect }) => {
     scopeOfWork: contract.scopeOfWork || "No scope information available",
     number: contract.number || "Unknown",
   };
-  console.log("Number", contract.number)
+  
   // Determinar si el contrato está asignado
   const isAssigned = safeContract.status === "assigned";
 
@@ -128,7 +128,7 @@ export const ContractCard = ({ contract, onSelect }) => {
               className={`text-company px-4 text-sm ${
                 isAssigned ? "text-gray-100" : "text-company"
               }`}>
-              ID: {safeContract.id}
+              ID: {safeContract.number}
             </span>
           </div>
           <div className="flex items-center text-sm text-gray-600 mt-1">
