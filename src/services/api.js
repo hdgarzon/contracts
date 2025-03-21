@@ -195,7 +195,8 @@ const formatFilters = (filters) => {
 const formatContractData = (apiContract) => {
   // Crear contrato con valores predeterminados según la estructura proporcionada
   const contract = {
-    id: apiContract.number || apiContract._id || "",
+    id: apiContract._id || "", // Usar _id de MongoDB para llamadas a la API
+    number: apiContract.number || "", // Guardar el número visible para mostrar al usuario
     status: apiContract.status || "published",
     type: apiContract.type || "",
     name: apiContract.services || "Turn Over",
@@ -205,12 +206,9 @@ const formatContractData = (apiContract) => {
     value: apiContract.anualEstimation?.clientPrice
       ? formatCurrency(apiContract.anualEstimation.clientPrice)
       : "0",
-    // Asegurarse de usar la propiedad correcta de unitCount de la respuesta de la API
     unitCount: apiContract.units || apiContract.unitCount || 0,
-    // Importante: Usar el valor exacto de la API para bidders, sin valor predeterminado
-    bidders: apiContract.bidders || 0, // Cambiado de 5 a 0
+    bidders: apiContract.bidders || 0,
     scopeOfWork: apiContract.scopeOfWork || "No disponible",
-    // Añadir información sobre el limpiador asignado
     winCleaner: apiContract.winCleaner || null,
   };
 
@@ -255,6 +253,29 @@ const extractContractsFromResponse = (response) => {
   }
 
   return [];
+};
+
+// Función para validar y limpiar el ID del contrato para MongoDB
+const validateContractId = (id) => {
+  if (!id) {
+    console.error("ID de contrato no proporcionado");
+    throw new Error("Contract ID is required");
+  }
+
+  // Eliminar espacios en blanco
+  const cleanId = id.toString().trim();
+  
+  // Verificar si se ajusta al formato de MongoDB ObjectId (24 caracteres hexadecimales)
+  // o si es un código con formato CO###### que podría necesitar transformación
+  const isMongoId = /^[0-9a-fA-F]{24}$/.test(cleanId);
+  const isContractCode = /^CO\d+$/.test(cleanId);
+  
+  if (!isMongoId && !isContractCode) {
+    console.error(`ID de contrato inválido: ${cleanId}. Debe ser un ObjectId de MongoDB válido o un código de contrato.`);
+    throw new Error("Invalid contract ID format");
+  }
+  
+  return cleanId;
 };
 
 // Servicio para contratos
@@ -329,7 +350,10 @@ export const contractService = {
     try {
       if (!id) return null;
 
-      const response = await apiClient.get(`/contracts/${id}`);
+      // Validar y limpiar el ID del contrato
+      const cleanId = validateContractId(id);
+
+      const response = await apiClient.get(`/contracts/${cleanId}`);
 
       if (!response.data) return null;
 
@@ -359,6 +383,17 @@ export const applicationService = {
   // Enviar una aplicación para un contrato
   submitApplication: async (contractId, formData) => {
     try {
+      // Validar que tenemos un ID
+      if (!contractId) {
+        console.error("ID de contrato no proporcionado");
+        throw new Error("Contract ID is required");
+      }
+      
+      // Eliminar espacios en blanco
+      const cleanId = contractId.toString().trim();
+      
+      console.log(`Enviando aplicación para contrato ID: ${cleanId}`);
+      
       // Transformar datos del formulario para coincidir con el formato esperado por la API
       const apiData = {
         survey: {
@@ -388,9 +423,11 @@ export const applicationService = {
         },
       };
   
+      console.log("Datos formateados para API:", JSON.stringify(apiData, null, 2));
+      
       // Hacer la llamada a la API para enviar la aplicación
       const response = await apiClient.put(
-        `/contracts/${contractId}`,
+        `/contracts/${cleanId}`,
         apiData
       );
   
@@ -398,10 +435,16 @@ export const applicationService = {
     } catch (error) {
       console.error("Error al enviar aplicación:", error);
       
+      // Información más detallada para diagnóstico
+      if (error.response) {
+        console.error("Respuesta del servidor:", error.response.status, error.response.data);
+      }
+      
       // Lanzar el error para que pueda ser capturado por la función que lo llama
       throw error;
     }
   },
+  
 
   // Obtener aplicaciones del usuario
   getUserApplications: async () => {

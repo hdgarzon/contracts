@@ -19,8 +19,9 @@ export const ContractCard = ({ contract, onSelect }) => {
     status: contract.status || "published",
     winCleaner: contract.winCleaner || null,
     scopeOfWork: contract.scopeOfWork || "No scope information available",
+    number: contract.number || "Unknown",
   };
-
+  console.log("Number", contract.number)
   // Determinar si el contrato está asignado
   const isAssigned = safeContract.status === "assigned";
 

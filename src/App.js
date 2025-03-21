@@ -60,6 +60,8 @@ const CleaningApp = () => {
 
   // En el componente CleaningApp, añade el nuevo estado de error
   const [communicationError, setCommunicationError] = useState(null);
+  // Estado para errores de aplicación
+  const [applicationError, setApplicationError] = useState(null);
 
   // Verificar si la membresía es válida (Max, Elite o QuickPay)
   const isValidMembership = (membershipType) => {
@@ -246,30 +248,61 @@ const CleaningApp = () => {
 
   const handleApply = () => {
     setShowApplicationModal(true);
+    // Limpiar errores previos
+    setApplicationError(null);
   };
 
   const handleSubmitApplication = async (formData) => {
     setIsLoading(true);
-
+    setApplicationError(null); // Limpiar errores previos
+  
     try {
+      // Validar que tenemos un contrato seleccionado con ID
+      if (!selectedContract) {
+        throw new Error("No se ha seleccionado un contrato válido");
+      }
+  
+      // Usar el ID de MongoDB (_id) en lugar del número visible (number)
+      const contractId = selectedContract.id;
+      
+      if (!contractId) {
+        console.error("El contrato seleccionado no tiene un ID válido:", selectedContract);
+        throw new Error("ID de contrato no válido");
+      }
+  
+      console.log("Enviando aplicación para contrato ID:", contractId);
+      console.log("Datos del formulario:", formData);
+  
       const response = await applicationService.submitApplication(
-        selectedContract.id,
+        contractId,
         formData
       );
-
+  
       setShowApplicationModal(false);
       setView("confirmation");
     } catch (error) {
-      // Verifica si es el error "Bidder already exists"
+      console.error("Error detallado al enviar aplicación:", error);
+  
+      // Verificar si es el error "Bidder already exists"
       if (
         error.response &&
         error.response.status === 400 &&
         error.response.data &&
         error.response.data.message === "Bidder already exists"
       ) {
-        alert("Ya has aplicado a este contrato anteriormente.");
-      } else {
-        alert(
+        setApplicationError("Ya has aplicado a este contrato anteriormente.");
+      } 
+      // Error específico de MongoDB ObjectId inválido
+      else if (
+        error.message && 
+        (error.message.includes("Invalid contract ID format") || 
+         error.message.includes("a string of 12 bytes or a string of 24 hex characters"))
+      ) {
+        console.error("Error de formato de ID:", selectedContract);
+        setApplicationError("El formato del ID del contrato es inválido. Por favor, contacta al soporte técnico.");
+      }
+      else {
+        setApplicationError(
           "Hubo un error al enviar tu aplicación. Por favor, intenta de nuevo."
         );
       }
@@ -313,6 +346,24 @@ const CleaningApp = () => {
           </div>
         </div>
       )}
+      
+      {/* Mostrar errores de aplicación */}
+      {applicationError && (
+        <div className="fixed inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50">
+          <div className="bg-red-100 p-6 rounded-lg shadow-lg max-w-md text-center">
+            <h2 className="text-xl font-semibold mb-4 text-red-800">
+              Error en la aplicación
+            </h2>
+            <p className="text-red-600 mb-6">{applicationError}</p>
+            <button
+              onClick={() => setApplicationError(null)}
+              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
+      
       {(isLoading || isContractsLoading) && (
         <div className="fixed inset-0 bg-white bg-opacity-80 flex items-center justify-center z-50">
           <div className="text-center">
